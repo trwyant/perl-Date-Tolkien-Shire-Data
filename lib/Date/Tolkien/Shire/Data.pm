@@ -15,7 +15,7 @@ use Scalar::Util ();
 use Exporter ();
 our @ISA = qw{ Exporter };
 
-our $VERSION = '0.000_01';
+our $VERSION = '0.000_001';
 
 our @EXPORT_OK = qw{
     __date_to_day_of_year
