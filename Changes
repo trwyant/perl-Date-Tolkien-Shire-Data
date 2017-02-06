@@ -1,2 +1,13 @@
+0.000_002	2017-02-06	T. R. Wyant
+    Have subroutines return 0 or '' as appropriate (meaning, for legal
+    dates to which they do not apply, e.g.  month-related stuff on a
+    holiday).
+
+    Simplify __format conversion code. This mostly means things like %m on a
+    holiday producing '00', though it also means requiring a day_of_week()
+    method on the object passed in. This method was added to the hash
+    wrapper, implemented by constructing a {day_of_week} entry if one did
+    not already exist.
+
 0.000_001	2017-02-05	T. R. Wyant
     Initial version.
