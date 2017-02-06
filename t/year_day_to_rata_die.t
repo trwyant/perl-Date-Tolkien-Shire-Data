@@ -12,17 +12,9 @@ use Date::Tolkien::Shire::Data qw{
 };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-use constant TOP_YEAR	=> 7600;
+use constant TOP_YEAR	=> 400;
 
-# This is the Achilles' Heel of this test. __year_day_to_rata_die()
-# computes what I call Shire Rata Die for day zero year 1 (a reasonably
-# straightforward computation) and then adds SHIRE_RATA_DIE_OFFSET to
-# get the 'Real' Rata Die, which is based on January 1 of year 1 of the
-# proleptic Gregorian calendar. So this constant is used in both the
-# computation and the test, and is NOT tested independently. But if I
-# had a better way to get the constant, I would use it both places.
-
-my $want_rd = Date::Tolkien::Shire::Data->SHIRE_RATA_DIE_OFFSET + 1;
+my $want_rd = 1;
 
 plan tests => TOP_YEAR * 3;
 

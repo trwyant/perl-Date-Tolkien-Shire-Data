@@ -32,6 +32,7 @@ our @EXPORT_OK = qw{
     __weekday_name __weekday_short
     __week_of_year
     __year_day_to_rata_die
+    GREGORIAN_RATA_DIE_TO_SHIRE
 };
 our %EXPORT_TAGS = (
     all	=> \@EXPORT_OK,
@@ -44,20 +45,9 @@ use constant MIDYEAR_DAY_OF_YEAR	=> 183;
 use constant OVERLITHE_DAY_NUMBER	=> 4;
 use constant OVERLITHE_DAY_OF_YEAR	=> 184;
 
-# SHIRE_RATA_DIE_OFFSET was originally computed by the value of $rd_days
-# in
-#
-# my $dts = DateTime::Fiction::JRRTolkien::Shire->new(
-#     year	=> 1,
-#     holiday	=> 1,
-# );
-# my ( $rd_days, $rd_seconds ) = $dts->utc_rd_values();
-#
-# using DateTime::Fiction::JRRTolkien::Shire version 0.20_02. This is
-# after I adopted the module, but before I started messing with the
-# computational internals (if, indeed, I ever do; I have not done so so
-# far.)
-use constant SHIRE_RATA_DIE_OFFSET	=> -1995693;
+# See the documentation below for where the value came from.
+
+use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995693;
 
 {
 
@@ -481,7 +471,7 @@ sub __is_leap_year {
 
 sub __rata_die_to_year_day {
     my ( $rata_die ) = @_;
-    my $srd = $rata_die - SHIRE_RATA_DIE_OFFSET - 1;
+    my $srd = $rata_die - 1;
     my $year = POSIX::floor( ( $srd -
 	    POSIX::floor( $srd / ( 365 * 4 + 1 ) ) +
 	    POSIX::floor( $srd / ( ( 365 * 4 + 1 ) * 25 - 1 ) ) -
@@ -548,7 +538,7 @@ sub __year_day_to_rata_die {
     $day ||= 1;
     return $year * 365 + POSIX::floor( $year / 4 ) -
 	POSIX::floor( $year / 100 ) + POSIX::floor( $year / 400 ) +
-	$day + SHIRE_RATA_DIE_OFFSET;
+	$day;
 }
 
 # Create methods for the hash wrapper
@@ -638,6 +628,9 @@ otherwise. The names begin with double underscores because it is
 anticipated that, although they are public as far as this package is
 concerned, they will be package-private for the purposes of any code
 that uses this package.
+
+All of the following are exportable to your name space, but none are
+exported by default.
 
 =head2 __date_to_day_of_year
 
@@ -1023,14 +1016,22 @@ rationalized this way.
 
  my ( $year, $day ) = __rata_die_to_year_day( $rata_die );
 
-Given a Rata Die day, returns the Shire year and day of the year of that
-Rata Die day.
+Given a Rata Die day, returns the year and day of the year corresponding
+to that Rata Die day.
 
 The algorithm used was inspired by Howard Hinnant's "C<chrono>-Compatible
 Low-Level Date Algorithms" at
 L<http://howardhinnant.github.io/date_algorithms.html>, and in
 particular his C<civil_from_days()> algorithm at
 L<http://howardhinnant.github.io/date_algorithms.html#civil_from_days>.
+
+This subroutine assumes no particular calendar, though it does assume
+the Gregorian year-length rules, which have also been adopted for the
+Shire calendar. If you feed it am honest-to-God Rata Die day (i.e. days
+since December 31 of proleptic Gregorian year 0) you get back the
+Gregorian year and the day of that year (C<1-366>). If you feed it a
+so-called Shire Rata Die (i.e. days since 1 Yule of Shire year 0) you
+get back the Shire year and the day of that year.
 
 =head2 __trad_weekday_name
 
@@ -1079,9 +1080,42 @@ returned.
 
 =head2 __year_day_to_rata_die
 
-Given the Shire year and day of the year, this subroutine returns the
-Rata Die day of the given year and day. The day of the year defaults to
-C<1> (i.e. C<2 Yule>).
+Given the year and day of the year, this subroutine returns the Rata Die
+day of the given year and day. The day of the year defaults to C<1>.
+
+This subroutine assumes no particular calendar, though it does assume
+the Gregorian year-length rules, which have also been adopted for the
+Shire calendar. If you feed it a Gregorian year, you get an
+honest-to-God Rata Die, as in days since December 31 of proleptic
+Gregorian year 0. If you feed it a Shire year, you get a so-called Shire
+Rata Die, as in the days since 1 Yule of Shire year 0.
+
+=head1 MANIFEST CONSTANTS
+
+The following manifest constants are exportable to your name space. None
+is exported by default.
+
+=head2 GREGORIAN_RATA_DIE_TO_SHIRE
+
+This manifest constant represents the number of days to add to a real
+Rata Die value (days since December 31 of proleptic Gregorian year 0) to
+get a so-called Shire Rata Die (days since 1 Yule of Shire year 0.)
+
+The value was determined by the following computation.
+
+  my $dts = DateTime::Fiction::JRRTolkien::Shire->new(
+      year	=> 1,
+      holiday	=> 1,
+  );
+  my ( $rd_days ) = $dts->utc_rd_values();
+
+using
+L<DateTime::Fiction::JRRTolkien::Shire|DateTime::Fiction::JRRTolkien::Shire>
+version 0.20_02. This is after I adopted that module but before I
+started messing with the computational internals. The actual value is
+the negative of C<$rd_days> as computed above, because I thought
+(perhaps wrongly) that it was more natural to add a value to the real
+Rata Die (to get Shire Rata Die) than to subtract one.
 
 =head1 SEE ALSO
 

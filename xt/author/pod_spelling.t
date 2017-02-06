@@ -27,6 +27,7 @@ Hinnant
 merchantability
 Oakenshield
 Overlithe
+proleptic
 Rata
 Sterday
 Thorin
