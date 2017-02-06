@@ -11,7 +11,7 @@ use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 plan tests => 366;
 
 my $want;
-my @holiday_want = ( undef, 1, 7, undef, undef, 1, 7 );
+my @holiday_want = ( undef, 1, 7, 0, 0, 1, 7 );
 
 foreach my $spec (
     [  0, 1,  1 ],

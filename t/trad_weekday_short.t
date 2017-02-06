@@ -10,7 +10,7 @@ use Test::More 0.47;	# The best we can do with Perl 5.7.2.
 
 plan tests => 8;
 
-is( __trad_weekday_short( 0 ), undef, q<Invalid weekday> );
+is( __trad_weekday_short( 0 ), '', q<No weekday> );
 
 is( __trad_weekday_short( 1 ), 'Ste', q<Weekday 1> );
 

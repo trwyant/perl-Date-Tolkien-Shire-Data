@@ -63,8 +63,8 @@ is( __format( $special, '%C' ), '14', q<%C on Midyear's day 1419> );
 # %D is deferred until all component formats have been tested.
 
 is( __format( $normal,  '%d' ), '25', q<%d on 25 Rethe 1419> );
-is( __format( $holiday, '%d' ), '', q<%d on 1 Lithe 1419> );
-is( __format( $special, '%d' ), '', q<%d on Midyear's day 1419> );
+is( __format( $holiday, '%d' ), '02', q<%d on 1 Lithe 1419> );
+is( __format( $special, '%d' ), '03', q<%d on Midyear's day 1419> );
 
 is( __format( $normal,  '%EA' ), 'Sunnendei', q<%EA on 25 Rethe 1419> );
 is( __format( $holiday, '%EA' ), 'Highdei', q<%EA on 1 Lithe 1419> );
@@ -91,8 +91,8 @@ is( __format( $holiday, '%Ee' ), '1Li', q<%Ee on 1 Lithe 1419> );
 is( __format( $special, '%Ee' ), 'Myd', q<%Ee on Midyear's day 1419> );
 
 is( __format( $normal,  '%e' ), '25', q<%e on 25 Rethe 1419> );
-is( __format( $holiday, '%e' ), '', q<%e on 1 Lithe 1419> );
-is( __format( $special, '%e' ), '', q<%e on Midyear's day 1419> );
+is( __format( $holiday, '%e' ), ' 2', q<%e on 1 Lithe 1419> );
+is( __format( $special, '%e' ), ' 3', q<%e on Midyear's day 1419> );
 
 # %F is deferred until all component formats have been tested.
 
@@ -129,8 +129,8 @@ is( __format( $holiday, '%M' ), '00', q<%M on 1 Lithe 1419> );
 is( __format( $special, '%M' ), '02', q<%M on Midyear's day 1419> );
 
 is( __format( $normal,  '%m' ), '03', q<%m on 25 Rethe 1419> );
-is( __format( $holiday, '%m' ), '', q<%m on 1 Lithe 1419> );
-is( __format( $special, '%m' ), '', q<%m on Midyear's day 1419> );
+is( __format( $holiday, '%m' ), '00', q<%m on 1 Lithe 1419> );
+is( __format( $special, '%m' ), '00', q<%m on Midyear's day 1419> );
 
 is( __format( $normal,  '%n' ), "\n", q<%n on 25 Rethe 1419> );
 is( __format( $holiday, '%n' ), "\n", q<%n on 1 Lithe 1419> );
@@ -172,23 +172,23 @@ is( __format( $special, '%t' ), "\t", q<%t on Midyear's day 1419> );
 
 is( __format( $normal,  '%U' ), '13', q<%U on 25 Rethe 1419> );
 is( __format( $holiday, '%U' ), '26', q<%U on 1 Lithe 1419> );
-is( __format( $special, '%U' ), '', q<%U on Midyear's day 1419> );
+is( __format( $special, '%U' ), '00', q<%U on Midyear's day 1419> );
 
 is( __format( $normal,  '%u' ), '2', q<%u on 25 Rethe 1419> );
 is( __format( $holiday, '%u' ), '7', q<%u on 1 Lithe 1419> );
-is( __format( $special, '%u' ), '', q<%u on Midyear's day 1419> );
+is( __format( $special, '%u' ), '0', q<%u on Midyear's day 1419> );
 
 is( __format( $normal,  '%V' ), '13', q<%V on 25 Rethe 1419> );
 is( __format( $holiday, '%V' ), '26', q<%V on 1 Lithe 1419> );
-is( __format( $special, '%V' ), '', q<%V on Midyear's day 1419> );
+is( __format( $special, '%V' ), '00', q<%V on Midyear's day 1419> );
 
 is( __format( $normal,  '%W' ), '13', q<%W on 25 Rethe 1419> );
 is( __format( $holiday, '%W' ), '26', q<%W on 1 Lithe 1419> );
-is( __format( $special, '%W' ), '', q<%W on Midyear's day 1419> );
+is( __format( $special, '%W' ), '00', q<%W on Midyear's day 1419> );
 
 is( __format( $normal,  '%w' ), '2', q<%w on 25 Rethe 1419> );
 is( __format( $holiday, '%w' ), '7', q<%w on 1 Lithe 1419> );
-is( __format( $special, '%w' ), '', q<%w on Midyear's day 1419> );
+is( __format( $special, '%w' ), '0', q<%w on Midyear's day 1419> );
 
 # %X is deferred until all component formats have been tested.
 

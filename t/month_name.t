@@ -10,7 +10,7 @@ use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
 plan tests => 13;
 
-is( __month_name( 0 ), undef, q<Invalid month> );
+is( __month_name( 0 ), '', q<A holiday> );
 
 is( __month_name( 1 ), 'Afteryule', q<Month 1> );
 

@@ -10,7 +10,7 @@ use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
 plan tests => 7;
 
-is( __holiday_name( 0 ), undef, q<Invalid holiday> );
+is( __holiday_name( 0 ), '', q<Not a holiday> );
 
 is( __holiday_name( 1 ), '2 Yule', q<Holiday 1> );
 

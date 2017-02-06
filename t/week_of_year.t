@@ -12,7 +12,7 @@ plan tests => 366;
 
 my $want;
 my $count;
-my @holiday_week = ( undef, 1, 26, undef, undef, 27, 52 );
+my @holiday_week = ( undef, 1, 26, 0, 0, 27, 52 );
 
 foreach my $spec (
     [  0, 1,  1 ],

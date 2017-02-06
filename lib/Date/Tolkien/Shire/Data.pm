@@ -61,7 +61,7 @@ use constant SHIRE_RATA_DIE_OFFSET	=> -1995693;
 
 {
 
-    my @holiday = ( undef, 1, 7, undef, undef, 1, 7 );
+    my @holiday = ( undef, 1, 7, 0, 0, 1, 7 );
     my @month_zero = ( undef, 0, 2, 4, 6, 1, 3, 0, 2, 4, 6, 1, 3 );
 
     sub __day_of_week {
@@ -174,30 +174,22 @@ sub _fmt_get_md {
 
 {
     my %spec = (
-	A	=> sub { __weekday_name(
-		__day_of_week( _fmt_get_md( $_[0] ) ) ) },
-	a	=> sub { __weekday_short(
-		__day_of_week( _fmt_get_md( $_[0] ) ) ) },
+	A	=> sub { __weekday_name( $_[0]->day_of_week() ) },
+	a	=> sub { __weekday_short( $_[0]->day_of_week() ) },
 	B	=> sub { __month_name( $_[0]->month() ) },
 	b	=> sub { __month_short( $_[0]->month() ) },
 	C	=> sub { sprintf '%02d', int( $_[0]->year() / 100 ) },
 	c	=> sub { __format( $_[0], '%{{%a %x||||%x}} %X' ) },
 	D	=> sub { __format( $_[0], '%{{%m/%d||%Ee}}/%y' ) },
-	d	=> sub { $_[0]->month() ?
-		sprintf( '%02d', $_[0]->day() ) : '' },
-	EA	=> sub { __trad_weekday_name(
-		__day_of_week( _fmt_get_md( $_[0] ) ) ) },
-	Ea	=> sub { __trad_weekday_short(
-		__day_of_week( _fmt_get_md( $_[0] ) ) ) },
+	d	=> sub { sprintf '%02d', $_[0]->day() || $_[0]->holiday() },
+	EA	=> sub { __trad_weekday_name( $_[0]->day_of_week() ) },
+	Ea	=> sub { __trad_weekday_short( $_[0]->day_of_week() ) },
 	Ed	=> sub { __on_date( _fmt_get_md( $_[0] ) ) },
-	EE	=> sub { $_[0]->month() ? '' : __holiday_name(
-		$_[0]->holiday() || 0 ) || '' },
-	Ee	=> sub { $_[0]->month() ? '' : __holiday_short(
-		$_[0]->holiday() || 0 ) || '' },
+	EE	=> sub { __holiday_name( $_[0]->holiday() || 0 ) },
+	Ee	=> sub { __holiday_short( $_[0]->holiday() || 0 ) },
 	Ex	=> sub { __format( $_[0],
 		'%{{%A %e %B %Y||%A %EE %Y||%EE %Y}}' ) },
-	e	=> sub { $_[0]->month() ?
-		sprintf( '%2d', $_[0]->day() ) : '' },
+	e	=> sub { sprintf '%2d', $_[0]->day() || $_[0]->holiday() },
 	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}' ) },
 #	G	Same as Y by definition of Shire calendar
 	H	=> sub { sprintf '%02d', $_[0]->hour() || 0 },
@@ -208,8 +200,7 @@ sub _fmt_get_md {
 	k	=> sub { sprintf '%2d', $_[0]->hour() || 0 },
 	l	=> sub { sprintf '%2d', ( $_[0]->hour() || 0 ) % 12 || 12 },
 	M	=> sub { sprintf '%02d', $_[0]->minute() || 0 },
-	m	=> sub { $_[0]->month() ?
-		sprintf( '%02d', $_[0]->month() ) : '' },
+	m	=> sub { sprintf '%02d', $_[0]->month() || 0 },
 	N	=> \&_fmt_nano,
 	n	=> sub { "\n" },
 	P	=> sub { ( $_[0]->hour() || 0 ) > 11 ? 'pm' : 'am' },
@@ -220,10 +211,9 @@ sub _fmt_get_md {
 	s	=> sub { $_[0]->epoch() },
 	T	=> sub { __format( $_[0], '%H:%M:%S' ) },
 	t	=> sub { "\t" },
-	U	=> sub { my $w;
-		( $w = __week_of_year( _fmt_get_md( $_[0]) ) ) ?
-		sprintf( '%02d', $w ) : '' },
-	u	=> sub { __day_of_week( _fmt_get_md( $_[0] ) ) },
+	U	=> sub { sprintf '%02d', __week_of_year(
+		_fmt_get_md( $_[0] ) ) },
+	u	=> sub { $_[0]->day_of_week() },
 #	V	Same as U by definition of Shire calendar
 #	W	Same as U by definition of Shire calendar
 #	X	Same as r, I think
@@ -277,25 +267,25 @@ sub _fmt_nano {
 }
 
 {
-    my @name = ( undef,
+    my @name = ( '',
 	'2 Yule', '1 Lithe', q<Midyear's day>, 'Overlithe', '2 Lithe',
 	'1 Yule',
     );
 
     sub __holiday_name {
 	my ( $holiday ) = @_;
-	return $name[$holiday];
+	return $name[ $holiday || 0 ];
     }
 }
 
 {
-    my @name = ( undef,
+    my @name = ( '',
 	'2Yu', '1Li', 'Myd', 'Oli', '2Li', '1Yu',
     );
 
     sub __holiday_short {
 	my ( $holiday ) = @_;
-	return $name[$holiday];
+	return $name[ $holiday || 0 ];
     }
 }
 
@@ -305,7 +295,7 @@ sub __is_leap_year {
 }
 
 {
-    my @name = ( undef,
+    my @name = ( '',
 	'Afteryule', 'Solmath', 'Rethe', 'Astron', 'Thrimidge',
 	'Forelithe', 'Afterlithe', 'Wedmath', 'Halimath', 'Winterfilth',
 	'Blotmath', 'Foreyule',
@@ -313,17 +303,17 @@ sub __is_leap_year {
 
     sub __month_name {
 	my ( $month ) = @_;
-	return $name[$month || 0];
+	return $name[ $month || 0 ];
     }
 }
 
 {
-    my @name = ( undef, 'Ayu', 'Sol', 'Ret', 'Ast', 'Thr', 'Fli', 'Ali',
+    my @name = ( '', 'Ayu', 'Sol', 'Ret', 'Ast', 'Thr', 'Fli', 'Ali',
 	'Wed', 'Hal', 'Win', 'Blo', 'Fyu' );
 
     sub __month_short {
 	my ( $month ) = @_;
-	return $name[$month || 0];
+	return $name[ $month || 0 ];
     }
 }
 
@@ -479,7 +469,7 @@ sub __is_leap_year {
 }
 
 {
-    my @holiday_quarter = ( undef, 1, 2, undef, undef, 3, 4 );
+    my @holiday_quarter = ( undef, 1, 2, 0, 0, 3, 4 );
 
     sub __quarter {
 	my ( $month, $day ) = @_;
@@ -501,26 +491,26 @@ sub __rata_die_to_year_day {
 }
 
 {
-    my @name = ( undef, 'Sterrendei', 'Sunnendei', 'Monendei',
+    my @name = ( '', 'Sterrendei', 'Sunnendei', 'Monendei',
 	'Trewesdei', 'Hevenesdei', 'Meresdei', 'Highdei' );
 
     sub __trad_weekday_name {
 	my ( $weekday ) = @_;
-	return $name[$weekday || 0];
+	return $name[ $weekday || 0 ];
     }
 }
 
 {
-    my @name = ( undef, 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
+    my @name = ( '', 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
 
     sub __trad_weekday_short {
 	my ( $weekday ) = @_;
-	return $name[$weekday || 0];
+	return $name[ $weekday || 0 ];
     }
 }
 
 {
-    my @holiday = ( undef, 1, 26, undef, undef, 27, 52 );
+    my @holiday = ( undef, 1, 26, 0, 0, 27, 52 );
     my @month_offset = ( undef, ( 0 ) x 6, ( 2 ) x 6 );
 
     sub __week_of_year {
@@ -534,21 +524,21 @@ sub __rata_die_to_year_day {
 }
 
 {
-    my @name = ( undef, 'Sterday', 'Sunday', 'Monday', 'Trewsday',
+    my @name = ( '', 'Sterday', 'Sunday', 'Monday', 'Trewsday',
 	'Hevensday', 'Mersday', 'Highday' );
 
     sub __weekday_name {
 	my ( $weekday ) = @_;
-	return $name[$weekday || 0];
+	return $name[ $weekday || 0 ];
     }
 }
 
 {
-    my @name = ( undef, 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
+    my @name = ( '', 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
 
     sub __weekday_short {
 	my ( $weekday ) = @_;
-	return $name[$weekday || 0];
+	return $name[ $weekday || 0 ];
     }
 }
 
@@ -563,13 +553,33 @@ sub __year_day_to_rata_die {
 
 # Create methods for the hash wrapper
 
-foreach my $method ( qw{
-    year month day holiday hour minute second nanosecond
-    epoch offset time_zone_short_name
-} ) {
-    my $fqn = join '::', __PACKAGE__, 'Date', $method;
-    no strict qw{ refs };
-    *$fqn = sub { $_[0]->{$method} };
+{
+    my %calc = (
+	day_of_week	=> sub {
+	    return __day_of_week(
+		$_[0]->month(),
+		$_[0]->day() || $_[0]->holiday(),
+	    );
+	},
+    );
+
+    foreach my $method ( qw{
+	year month day holiday hour minute second nanosecond
+	epoch offset time_zone_short_name day_of_week
+    } ) {
+	my $fqn = join '::', __PACKAGE__, 'Date', $method;
+	if ( my $code = $calc{$method} ) {
+	    no strict qw{ refs };
+	    *$fqn = sub {
+		defined $_[0]->{$method}
+		    or $_[0]->{$method} = $code->( $_[0] );
+		return $_[0]->{$method};
+	    };
+	} else {
+	    no strict qw{ refs };
+	    *$fqn = sub { $_[0]->{$method} };
+	}
+    }
 }
 
 1;
@@ -644,7 +654,7 @@ Overlithe ("month" 0, day 4) and it is not a leap year.
 Given a month number and day number in the month, computes the day of
 the week that day falls on, as a number from 1 to 7, 1 being C<Sterday>.
 If the day is Midyear's day or the Overlithe (month C<0>, days C<3> or
-C<4>) the result is C<undef>.
+C<4>) the result is C<0>.
 
 =head2 __day_of_year_to_date
 
@@ -670,6 +680,7 @@ methods). The methods (or keys) used are:
   hour
   minute
   second
+  day_of_week
   nanosecond
   epoch
   offset
@@ -732,7 +743,8 @@ is discouraged, because it may not be clear whether it is month/day/year
 =item %d
 
 The day of the month as a decimal number, zero-filled (range C<01> to
-C<30>).
+C<30>). On holidays it is the holiday number, zero-filled (range C<01>
+to C<06>).
 
 =item %EA
 
@@ -763,8 +775,9 @@ than abbreviations.
 
 =item %e
 
-The day of the month as a decimal number, space-filled (range C< 1> to
-C<30>).
+The day of the month as a decimal number, space-filled (range C<' 1'> to
+C<'30'>). On holidays it is the holiday number, space-filled (range
+C<' 1'> to C<' 6'>).
 
 =item %F
 
@@ -807,7 +820,8 @@ The minute, zero-filled, in the range C<'00'> to C<'59'>.
 
 =item %m
 
-The month number, zero filled, in the range C<'01'> to C<'12'>.
+The month number, zero filled, in the range C<'01'> to C<'12'>. On
+holidays it is C<'00'>.
 
 =item %N
 
@@ -944,15 +958,18 @@ with percent signs (i.e. C<'|%|%|'>.
  say __holiday_name( 3 );
 
 Given a holiday number C<(1-6)>, this subroutine returns that holiday's
-name. If the holiday number is out of range, C<undef> is returned.
+name. If the holiday number is C<0> (i.e. the day is not a holiday), an
+empty string is returned. Otherwise, C<undef> is returned.
 
 =head2 __holiday_short
 
  say __holiday_short( 3 );
 
 Given a holiday number C<(1-6)>, this subroutine returns that holiday's
-three-letter abbreviation. If the holiday number is out of range,
-C<undef> is returned.
+three-letter abbreviation. If the holiday number is C<0> (i.e. the day
+is not a holiday), an empty string is returned. Otherwise, C<undef> is
+returned.
+
 
 =head2 __is_leap_year
 
@@ -966,15 +983,17 @@ and C<0> if it is not.
  say __month_name( 3 );
 
 Given a month number C<(1-12)>, this subroutine returns that month's
-name. If the month number is out of range, C<undef> is returned.
+name. If the month number is C<0> (i.e. a holiday), the empty string is
+returned. Otherwise C<undef> is returned.
 
 =head2 __month_short
 
  say __month_short( 3 );
 
 Given a month number C<(1-12)>, this subroutine returns that month's
-three-letter abbreviation. If the month number is out of range, C<undef>
-is returned.
+three-letter abbreviation. If the month number is C<0> (i.e. a holiday),
+the empty string is returned. Otherwise C<undef> is returned.
+
 
 =head2 __on_date
 
@@ -992,8 +1011,8 @@ is copyright J. R. R. Tolkien, renewed by Christopher R. Tolkien et al.
  say __quarter( $month, $day );
 
 Given month and day numbers, returns the relevant quarter number. If the
-date specified is Midyear's day or the Overlithe (month C<0>, days
-C<3-4>), the result is C<undef>; otherwise it is a number in the range
+date specified is Midyear's day or the Overlithe ("month" C<0>, days
+C<3-4>), the result is C<0>; otherwise it is a number in the range
 C<1-4>.
 
 There is nothing I know of about hobbits using calendar quarters in
@@ -1018,38 +1037,45 @@ L<http://howardhinnant.github.io/date_algorithms.html#civil_from_days>.
  say 'Day 1 is ', __trad_weekday_name( 1 );
 
 This subroutine computes the traditional (i.e. old-style) name of a
-weekday given its number (1-7). If the number is out of range, C<undef>
-is returned.
+weekday given its number (1-7). If the weekday number is C<0> (i.e.
+Midyear's day or the Overlithe) the empty string is returned. Otherwise,
+C<undef> is returned.
 
 =head2 __trad_weekday_short
 
  say 'Day 1 is ', __trad_weekday_short( 1 );
 
 This subroutine computes the three-letter abbreviation of a traditional
-(i.e. old-style) weekday given its number (1-7). If the number is out of
-range, C<undef> is returned.
+(i.e. old-style) weekday given its number (1-7). If the weekday number
+is C<0> (i.e.  Midyear's day or the Overlithe) the empty string is
+returned. Otherwise, C<undef> is returned.
+
 
 =head2 __weekday_name
 
  say 'Day 1 is ', __weekday_name( 1 );
 
 This subroutine computes the name of a weekday given its number (1-7).
-If the number is out of range, C<undef> is returned.
+If the weekday number is C<0> (i.e. Midyear's day or the Overlithe) the
+empty string is returned. Otherwise, C<undef> is returned.
 
 =head2 __weekday_short
 
  say 'Day 1 is ', __weekday_short( 1 );
 
 This subroutine computes the three-letter abbreviation of a weekday
-given its number (1-7). If the number is out of range, C<undef> is
-returned.
+given its number (1-7). If the weekday number is C<0> (i.e. Midyear's
+day or the Overlithe) the empty string is returned. Otherwise, C<undef>
+is returned.
 
 =head2 __week_of_year
 
  say '25 Rethe is in week ', __week_of_year( 3, 25 );
 
 This subroutine computes the week number of the given month and day.
-Weeks start on Sterday, and the first week of the year is week 1.
+Weeks start on Sterday, and the first week of the year is week 1. If the
+date is part of no week (i.e. Midyear's day or the Overlithe), C<0> is
+returned.
 
 =head2 __year_day_to_rata_die
 
