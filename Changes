@@ -1,3 +1,11 @@
+0.000_003	2017-02-06	T. R. Wyant
+    Remove Shire-related constant from __year_day_to_rata_die() and
+    __rata_die_to_year_day(). This way they can be used on any calendar
+    having the Gregorian year-length rules.
+
+    Added exportable manifest constant GREGORIAN_RATA_DIE_TO_SHIRE to
+    convert from "true" (Gregorian-based) Rata Die to Shire Rata Die.
+
 0.000_002	2017-02-06	T. R. Wyant
     Have subroutines return 0 or '' as appropriate (meaning, for legal
     dates to which they do not apply, e.g.  month-related stuff on a
