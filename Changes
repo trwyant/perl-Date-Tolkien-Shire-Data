@@ -1,3 +1,10 @@
+0.000_004	2017-02-07	T. R. Wyant
+    Correct __rata_die_to_year_day(). Also test it more exhaustively
+    (if author) or at least in a more targeted manner (if not).
+
+    Also correct GREGORIAN_RATA_DIE_TO_SHIRE, using a better-thought-out
+    computation.
+
 0.000_003	2017-02-06	T. R. Wyant
     Remove Shire-related constant from __year_day_to_rata_die() and
     __rata_die_to_year_day(). This way they can be used on any calendar
