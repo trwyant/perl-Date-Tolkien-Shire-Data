@@ -47,7 +47,7 @@ use constant OVERLITHE_DAY_OF_YEAR	=> 184;
 
 # See the documentation below for where the value came from.
 
-use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995693;
+use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 
 {
 
@@ -469,15 +469,22 @@ sub __is_leap_year {
     }
 }
 
+# TODO In a leap year, day 366 is assigned to the wrong year.
 sub __rata_die_to_year_day {
     my ( $rata_die ) = @_;
-    my $srd = $rata_die - 1;
-    my $year = POSIX::floor( ( $srd -
-	    POSIX::floor( $srd / ( 365 * 4 + 1 ) ) +
-	    POSIX::floor( $srd / ( ( 365 * 4 + 1 ) * 25 - 1 ) ) -
-	    POSIX::floor( $srd / ( ( ( 365 * 4 + 1 ) * 25 - 1 ) * 4
-		    + 1 ) ) ) / 365 ) + 1;
-    return ( $year, $rata_die - __year_day_to_rata_die( $year ) + 1 );
+
+    --$rata_die;	# The algorithm is simpler with zero-based days.
+    my $cycle = POSIX::floor( $rata_die / 146097 );
+    my $day_of_cycle = $rata_die - $cycle * 146097;
+    my $year = POSIX::floor( ( $day_of_cycle -
+	    POSIX::floor( $day_of_cycle / 1460 ) +
+	    POSIX::floor( $day_of_cycle / 36524 ) -
+	    POSIX::floor( $day_of_cycle / 146096 ) ) / 365 ) +
+	    400 * $cycle + 1;
+    # We pay here for the zero-based day by having to add back 2 rather
+    # than 1.
+    my $year_day = $rata_die - __year_day_to_rata_die( $year ) + 2;
+    return ( $year, $year_day );
 }
 
 {
@@ -1104,18 +1111,21 @@ get a so-called Shire Rata Die (days since 1 Yule of Shire year 0.)
 The value was determined by the following computation.
 
   my $dts = DateTime::Fiction::JRRTolkien::Shire->new(
-      year	=> 1,
-      holiday	=> 1,
+      year    => 1,
+      holiday => 1,
   );
-  my ( $rd_days ) = $dts->utc_rd_values();
+  my $gdt = DateTime->new(
+      year    => 1,
+      month   => 1,
+      day     => 1,
+  );
+  my $rd_to_shire = ( $gdt->utc_rd_values() )[0] -
+      ( $dts->utc_rd_values() )[0];
 
 using
 L<DateTime::Fiction::JRRTolkien::Shire|DateTime::Fiction::JRRTolkien::Shire>
-version 0.20_02. This is after I adopted that module but before I
-started messing with the computational internals. The actual value is
-the negative of C<$rd_days> as computed above, because I thought
-(perhaps wrongly) that it was more natural to add a value to the real
-Rata Die (to get Shire Rata Die) than to subtract one.
+version 0.21. This is after I adopted that module but before I started
+messing with the computational internals.
 
 =head1 SEE ALSO
 
