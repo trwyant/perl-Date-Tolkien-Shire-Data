@@ -36,7 +36,6 @@ sub requires {
         'Carp'	=> 0,
         'Exporter'	=> 0,
         'POSIX'		=> 0,
-        'Scalar::Util'	=> 0,
         'constant'	=> 0,
         'strict'	=> 0,
         'warnings'	=> 0,

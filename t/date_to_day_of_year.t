@@ -16,7 +16,7 @@ plan tests => 2193;
 
 foreach my $year ( 1419, 1420 ) {
     my $is_leap = __is_leap_year( $year );
-    note( $is_leap ? "$year is a leap year" : "$year is not a leap year" );
+    print "# $year is ", ( $is_leap ? '' : 'not ' ), "a leap year\n";
     my $want = 1;
     foreach my $spec (
 	[  0, 1,  1 ],

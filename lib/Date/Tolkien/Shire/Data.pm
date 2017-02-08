@@ -7,7 +7,6 @@ use warnings;
 
 use Carp ();
 use POSIX ();
-use Scalar::Util ();
 
 # We can't use 'use Exporter qw{ import }' because we need to run under
 # Perl 5.6.2, and since as I write this the Perl porters are working on
@@ -26,6 +25,7 @@ our @EXPORT_OK = qw{
     __holiday_name __holiday_short
     __month_name __month_short
     __on_date
+    __on_date_accented
     __quarter
     __rata_die_to_year_day
     __trad_weekday_name __trad_weekday_short
@@ -109,16 +109,26 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 }
 
 {
+    use constant FORMAT_DATE_ERROR => 'Date must be object or hash';
+
     sub __format {
 	my ( $date, $tplt ) = @_;
 
-	if ( HASH_REF eq ref $date ) {
+	my $ref = ref $date
+	    or Carp::croak( FORMAT_DATE_ERROR );
+
+	if ( HASH_REF eq $ref ) {
 	    my %hash = %{ $date };
 	    $date = bless \%hash, join '::', __PACKAGE__, 'Date';
 	}
 
-	Scalar::Util::blessed( $date )
-	    or Carp::croak( 'Date must be object or hash' );
+	{
+	    local $@ = undef;
+	    eval {
+		$date->can( 'isa' );
+		1;
+	    } or Carp::croak( FORMAT_DATE_ERROR );
+	}
 
 	$tplt =~ s/ % (?: [{]  ( \w+ ) [}]	# method ($1)
 	    | [{]{2} ( .*? ) [}]{2}		# condition ($2)
