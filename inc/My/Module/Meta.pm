@@ -33,9 +33,10 @@ sub requires {
 ##  if ( ! $self->distribution() ) {
 ##  }
     return +{
-        'Carp'	=> 0,
+        'Carp'		=> 0,
         'Exporter'	=> 0,
         'POSIX'		=> 0,
+	'Text::Abbrev'	=> 0,
         'constant'	=> 0,
         'strict'	=> 0,
         'warnings'	=> 0,

@@ -7,6 +7,7 @@ use warnings;
 
 use Carp ();
 use POSIX ();
+use Text::Abbrev();
 
 # We can't use 'use Exporter qw{ import }' because we need to run under
 # Perl 5.6.2, and since as I write this the Perl porters are working on
@@ -22,8 +23,8 @@ our @EXPORT_OK = qw{
     __day_of_week
     __format
     __is_leap_year
-    __holiday_name __holiday_short
-    __month_name __month_short
+    __holiday_name __holiday_name_to_number __holiday_short
+    __month_name __month_name_to_number __month_short
     __on_date
     __on_date_accented
     __quarter
@@ -276,6 +277,21 @@ sub _fmt_nano {
 	my ( $holiday ) = @_;
 	return $name[ $holiday || 0 ];
     }
+
+    my $lookup = _make_lookup_hash( @name, 'myd', 'olithe' );
+    my @map = ( 0 .. 6, 3, 4 );
+    foreach ( values %{ $lookup } ) {
+	$_ = $map[$_];
+    }
+    $lookup->{m} = 3;
+    $lookup->{o} = 4;
+
+    sub __holiday_name_to_number {
+	my ( $holiday ) = _normalize_for_lookup( @_ );
+	$holiday =~ m/ \A [0-9]+ \z /smx
+	    and return $holiday;
+	return $lookup->{$holiday} || 0;
+    }
 }
 
 {
@@ -304,6 +320,20 @@ sub __is_leap_year {
     sub __month_name {
 	my ( $month ) = @_;
 	return $name[ $month || 0 ];
+    }
+
+    my $lookup = _make_lookup_hash( @name, qw{ ayule flithe alithe fyule
+	} );
+    my @map = ( 0 .. 12, 1, 6, 7, 12 );
+    foreach ( values %{ $lookup } ) {
+	$_ = $map[$_];
+    }
+
+    sub __month_name_to_number {
+	my ( $month ) = _normalize_for_lookup( @_ );
+	$month =~ m/ \A [0-9]+ \z /smx
+	    and return $month;
+	return $lookup->{$month} || 0;
     }
 }
 
@@ -556,6 +586,28 @@ sub __year_day_to_rata_die {
     return $year * 365 + POSIX::floor( $year / 4 ) -
 	POSIX::floor( $year / 100 ) + POSIX::floor( $year / 400 ) +
 	$day;
+}
+
+sub _normalize_for_lookup {
+    my @data = @_;
+    foreach ( @data ) {
+	( $_ = lc $_ ) =~ s/ [\s[:punct:]]+ //smxg;
+    }
+    return @data;
+}
+
+sub _make_lookup_hash {
+    my @data = _normalize_for_lookup( @_ );
+    my %index;
+    for ( my $inx = 0; $inx < @data; $inx++ ) {
+	$index{$data[$inx]} = $inx;
+    }
+    my %hash = Text::Abbrev::abbrev( @data );
+    delete $hash{ '' };
+    foreach ( values %hash ) {
+	$_ = $index{$_};
+    }
+    return wantarray ? %hash : \%hash;
 }
 
 # Create methods for the hash wrapper
@@ -971,6 +1023,17 @@ Given a holiday number C<(1-6)>, this subroutine returns that holiday's
 name. If the holiday number is C<0> (i.e. the day is not a holiday), an
 empty string is returned. Otherwise, C<undef> is returned.
 
+=head2 __holiday_name_to_number
+
+ say __holiday_name_to_number( 'overlithe' );
+
+Given a holiday name, this subroutine normalizes it by converting it to
+lower case and removing spaces and punctuation, and then returns the
+number of the holiday. Unique abbreviations of names or short names
+(a.k,a. abbreviations) are allowed. Arguments consisting entirely of
+digits are returned unmodified. Anything unrecognized causes C<0> to be
+returned.
+
 =head2 __holiday_short
 
  say __holiday_short( 3 );
@@ -995,6 +1058,17 @@ and C<0> if it is not.
 Given a month number C<(1-12)>, this subroutine returns that month's
 name. If the month number is C<0> (i.e. a holiday), the empty string is
 returned. Otherwise C<undef> is returned.
+
+=head2 __month_name_to_number
+
+ say __month_name_to_number( 'forelithe' );
+
+Given a month name, this subroutine normalizes it by converting it to
+lower case and removing spaces and punctuation, and then returns the
+number of the month. Unique abbreviations of names or short names
+(a.k,a. abbreviations) are allowed. Arguments consisting entirely of
+digits are returned unmodified. Anything unrecognized causes C<0> to be
+returned.
 
 =head2 __month_short
 
