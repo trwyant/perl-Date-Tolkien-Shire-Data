@@ -1,3 +1,11 @@
+0.000_006	2017-02-10	T. R. Wyant
+    Clean up eg/ scripts.
+
+    Add __format format %ED, for on_date() support.  This is like %Ed,
+    but a leading "\n" is added if the result is not null.  This means
+    the usual on_date() method can be duplicated by __format( $date,
+    '%Ex%n%ED' );
+
 0.000_005	2017-02-08	T. R. Wyant
     Add __holiday_name_to_number() and __month_name_to_number().
     These convert a holiday name to a holiday number and a month name to a
