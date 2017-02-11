@@ -185,6 +185,12 @@ sub _fmt_get_md {
 	d	=> sub { sprintf '%02d', $_[0]->day() || $_[0]->holiday() },
 	EA	=> sub { __trad_weekday_name( $_[0]->day_of_week() ) },
 	Ea	=> sub { __trad_weekday_short( $_[0]->day_of_week() ) },
+	ED	=> sub {
+	    my $d = __on_date( _fmt_get_md( $_[0] ) );
+	    defined $d
+		and $d = "\n$d";
+	    return $d;
+	},
 	Ed	=> sub { __on_date( _fmt_get_md( $_[0] ) ) },
 	EE	=> sub { __holiday_name( $_[0]->holiday() || 0 ) },
 	Ee	=> sub { __holiday_short( $_[0]->holiday() || 0 ) },
@@ -817,6 +823,12 @@ of no week.
 
 The abbreviated traditional weekday name, or C<''> for holidays that are
 part of no week.
+
+=item %ED
+
+The L<__on_date()|/__on_date> text for the given date, with a leading
+"\n" if there is in fact an event on that date. This makes '%Ex%n%ED'
+produce exactly the same text as L<__on_date()|/__on_date>.
 
 =item %Ed
 

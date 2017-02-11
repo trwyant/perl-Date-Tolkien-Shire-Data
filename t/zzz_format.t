@@ -8,7 +8,7 @@ use warnings;
 use Date::Tolkien::Shire::Data qw{ __format __on_date };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 147;
+plan tests => 150;
 
 my $normal = {
     year	=> 1419,
@@ -73,6 +73,21 @@ is( __format( $special, '%EA' ), '', q<%EA on Midyear's day 1419> );
 is( __format( $normal,  '%Ea' ), 'Sun', q<%Ea on 25 Rethe 1419> );
 is( __format( $holiday, '%Ea' ), 'Hig', q<%Ea on 1 Lithe 1419> );
 is( __format( $special, '%Ea' ), '', q<%Ea on Midyear's day 1419> );
+
+sub _ED {
+    my ( $month, $day ) = @_;
+    my $rslt = __on_date( $month, $day );
+    defined $rslt
+	and return "\n$rslt";
+    return $rslt;
+}
+
+is( __format( $normal,  '%ED' ), _ED( 3, 25 ),
+    q<%ED on 25 Rethe 1419> );
+is( __format( $holiday, '%ED' ), _ED( 0, 2 ) || '',
+    q<%ED on 1 Lithe 1419> );
+is( __format( $special, '%ED' ), _ED( 0, 3 ),
+    q<%ED on Midyear's day 1419> );
 
 is( __format( $normal,  '%Ed' ), __on_date( 3, 25 ),
     q<%Ed on 25 Rethe 1419> );
