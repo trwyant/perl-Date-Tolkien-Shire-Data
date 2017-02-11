@@ -22,29 +22,36 @@ perl version $]
 EOD
 	exit;
     },
-) and 2 == @ARGV or pod2usage( { -verbose => 0 } );
+) and @ARGV and 2 >= @ARGV or pod2usage( { -verbose => 0 } );
 
-my $name = $ARGV[0] ?
-    join( ' ', $ARGV[1], __month_name( $ARGV[0] ) ) :
+1 == @ARGV
+    and unshift @ARGV, 0;
+
+my @parts;
+my $day_of_week;
+$day_of_week = __day_of_week( @ARGV )
+    and push @parts, __weekday_name( $day_of_week );
+push @parts, $ARGV[0] ?
+    ( $ARGV[1], __month_name( $ARGV[0] ) ) :
     __holiday_name( $ARGV[1] );
-print "$name\n";
-print __on_date( @ARGV, "Nothing happened\n" );
+
+print "@parts\n\n";
+print __on_date( @ARGV ) || "Nothing happened\n";
 
 __END__
 
 =head1 TITLE
 
-on-date - <<< replace boiler plate >>>
+on-date - Display what happened on the given Shire date
 
 =head1 SYNOPSIS
 
- on-date
+ on-date 3 25   # Rethe 25
+ on-date 3      # Midyear's day
  on-date -help
  on-date -version
 
 =head1 OPTIONS
-
-<<< replace boiler plate >>>
 
 =head2 -help
 
@@ -57,7 +64,11 @@ This option displays the version of this script. The script then exits.
 
 =head1 DETAILS
 
-<<< replace boiler plate >>>
+This Perl script displays the given date in the Shire calendar, and what
+(if anything) happened in and around the War of the Ring on that date.
+The date is specified as two command line arguments. Normal dates are
+specified by month and day numbers. Holidays are specified by holiday
+number.
 
 =head1 AUTHOR
 

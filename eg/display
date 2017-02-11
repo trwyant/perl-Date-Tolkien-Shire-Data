@@ -34,7 +34,7 @@ sub call_format {
     my $tplt = shift @ARGV;
     my %hash = @ARGV;
     my $rslt = Date::Tolkien::Shire::Data::__format( \%hash, $tplt );
-    print "__format( '$tplt', \%hash ) = '$rslt'\n";
+    print "__format( \%hash, '$tplt' ) = '$rslt'\n";
     return;
 }
 
