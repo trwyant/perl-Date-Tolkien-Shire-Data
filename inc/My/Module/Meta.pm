@@ -37,6 +37,7 @@ sub requires {
         'Exporter'	=> 0,
         'POSIX'		=> 0,
 	'Text::Abbrev'	=> 0,
+	'charnames'	=> 0,
         'constant'	=> 0,
         'strict'	=> 0,
         'warnings'	=> 0,

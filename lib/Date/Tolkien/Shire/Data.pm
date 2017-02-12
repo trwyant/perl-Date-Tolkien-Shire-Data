@@ -5,6 +5,9 @@ use 5.006002;
 use strict;
 use warnings;
 
+
+use charnames qw{ :full };
+
 use Carp ();
 use POSIX ();
 use Text::Abbrev();
@@ -25,8 +28,7 @@ our @EXPORT_OK = qw{
     __is_leap_year
     __holiday_name __holiday_name_to_number __holiday_short
     __month_name __month_name_to_number __month_short
-    __on_date
-    __on_date_accented
+    __on_date __on_date_accented
     __quarter
     __rata_die_to_year_day
     __trad_weekday_name __trad_weekday_short
@@ -500,7 +502,49 @@ sub __is_leap_year {
 
     sub __on_date {
 	my ( $month, $day ) = @_;
-	return $on_date[ $month][$day];
+	defined $day
+	    or ( $month, $day ) = ( 0, $month );
+	return $on_date[$month][$day];
+    }
+
+    my @on_date_accented;
+
+    sub __on_date_accented {
+	my ( $month, $day ) = @_;
+	defined $day
+	    or ( $month, $day ) = ( 0, $month );
+
+	unless ( @on_date_accented ) {
+
+	    # This would be much easier with 'use utf8;', but
+	    # unfortunately this was broken under Perl 5.6.
+	    my $E_acute	= "\N{LATIN CAPITAL LETTER E WITH ACUTE}";
+	    my $e_acute	= "\N{LATIN CAPITAL LETTER E WITH ACUTE}";
+	    my $o_acute	= "\N{LATIN CAPITAL LETTER O WITH ACUTE}";
+	    my $u_acute	= "\N{LATIN CAPITAL LETTER U WITH ACUTE}";
+	    my $u_circ	= "\N{LATIN SMALL LETTER U WITH CIRCUMFLEX}";
+
+	    foreach my $month ( @on_date ) {
+		push @on_date_accented, [];
+		foreach my $day ( @{ $month } ) {
+		    if ( $day ) {
+			$day =~ s/ \b Annun \b /Ann${u_circ}n/smxgo;
+			$day =~ s/ \b Barad-dur \b /Barad-d${u_circ}r/smxgo;
+			$day =~ s/ \b Dunedain \b /D${u_acute}nedain/smxgo;
+			$day =~ s/ \b Eomer \b /${E_acute}omer/smxgo;
+			$day =~ s/ \b Eowyn \b /${E_acute}owyn/smxgo;
+			$day =~ s/ \b Khazad-dum \b /Khazad-d${u_circ}m/smxgo;
+			$day =~ s/ \b Lorien \b /L${o_acute}rien/smxgo;
+			$day =~ s/ \b Nazgul \b /Nazg${u_circ}l/smxgo;
+			$day =~ s/ \b Theoden \b /Th${e_acute}oden/smxgo;
+			$day =~ s/ \b Theodred \b /Th${e_acute}odred/smxgo;
+		    }
+		    push @{ $on_date_accented[-1] }, $day;
+		}
+	    }
+	}
+
+	return $on_date_accented[$month][$day];
     }
 }
 
@@ -1093,14 +1137,30 @@ the empty string is returned. Otherwise C<undef> is returned.
 
 =head2 __on_date
 
- say __on_date( $month, $day );
+ say __on_date( $month, $day ) // '';
+ say __on_date( $holiday ) // '';
 
-Given month and day numbers, returns text representing the events during
-and around the War of the Ring that occurred on that date. If nothing
-happened or any argument is out of range, C<undef> is returned.
+Given month and day numbers (or a holiday number), returns text
+representing the events during and around the War of the Ring that
+occurred on that date. If nothing happened or any argument is out of
+range, C<undef> is returned.
 
 The actual text returned is from Appendix B of "Lord Of The Rings", and
 is copyright J. R. R. Tolkien, renewed by Christopher R. Tolkien et al.
+
+=head2 __on_date_accented
+
+ binmode STDOUT, ':encoding(utf-8)';
+ say __on_date_accented( $month, $day ) // '';
+ say __on_date( $holiday ) // '';
+
+This wrapper for L<__on_date()|/__on_date()> accents those names and
+words that are accented in the text of the Lord Of The Rings. How these
+display depends on how your Perl is configured. Note that the example
+above assumes Perl 5.10 (for C<say()> and C<//>). Even without those,
+the two-argument C<binmode()> requires 5.8. Your mileage may vary.
+
+Note that the first call incurs the overhead of accenting all events.
 
 =head2 __quarter
 
