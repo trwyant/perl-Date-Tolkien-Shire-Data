@@ -1,3 +1,9 @@
+0.000_007	2017-02-13	T. R. Wyant
+    First CPAN release.
+
+    Add __on_date_accented(). This subroutine wraps __on_date(), but
+    returns proper nouns accented as they are in The Lord Of The Rings.
+
 0.000_006	2017-02-10	T. R. Wyant
     Clean up eg/ scripts.
 
