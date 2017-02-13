@@ -5,10 +5,10 @@ use 5.006002;
 use strict;
 use warnings;
 
-use Date::Tolkien::Shire::Data qw{ __format __on_date };
+use Date::Tolkien::Shire::Data qw{ __format __on_date __on_date_accented };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 150;
+plan tests => 156;
 
 my $normal = {
     year	=> 1419,
@@ -104,6 +104,28 @@ is( __format( $special, '%EE' ), q<Midyear's day>,
 is( __format( $normal,  '%Ee' ), '', q<%Ee on 25 Rethe 1419> );
 is( __format( $holiday, '%Ee' ), '1Li', q<%Ee on 1 Lithe 1419> );
 is( __format( $special, '%Ee' ), 'Myd', q<%Ee on Midyear's day 1419> );
+
+sub _EF {
+    my ( $month, $day ) = @_;
+    my $rslt = __on_date( $month, $day );
+    defined $rslt
+	and return "\n$rslt";
+    return $rslt;
+}
+
+is( __format( $normal,  '%EF' ), _EF( 3, 25 ),
+    q<%EF on 25 Rethe 1419> );
+is( __format( $holiday, '%EF' ), _EF( 0, 2 ) || '',
+    q<%EF on 1 Lithe 1419> );
+is( __format( $special, '%EF' ), _EF( 0, 3 ),
+    q<%EF on Midyear's day 1419> );
+
+is( __format( $normal,  '%Ef' ), __on_date_accented( 3, 25 ),
+    q<%Ef on 25 Rethe 1419> );
+is( __format( $holiday, '%Ef' ), __on_date_accented( 0, 2 ) || '',
+    q<%Ef on 1 Lithe 1419> );
+is( __format( $special, '%Ef' ), __on_date_accented( 0, 3 ),
+    q<%Ef on Midyear's day 1419> );
 
 is( __format( $normal,  '%e' ), '25', q<%e on 25 Rethe 1419> );
 is( __format( $holiday, '%e' ), ' 2', q<%e on 1 Lithe 1419> );

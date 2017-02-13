@@ -196,6 +196,13 @@ sub _fmt_get_md {
 	Ed	=> sub { __on_date( _fmt_get_md( $_[0] ) ) },
 	EE	=> sub { __holiday_name( $_[0]->holiday() || 0 ) },
 	Ee	=> sub { __holiday_short( $_[0]->holiday() || 0 ) },
+	EF	=> sub {
+	    my $d = __on_date_accented( _fmt_get_md( $_[0] ) );
+	    defined $d
+		and $d = "\n$d";
+	    return $d;
+	},
+	Ef	=> sub { __on_date_accented( _fmt_get_md( $_[0] ) ) },
 	Ex	=> sub { __format( $_[0],
 		'%{{%A %e %B %Y||%A %EE %Y||%EE %Y}}' ) },
 	e	=> sub { sprintf '%2d', $_[0]->day() || $_[0]->holiday() },
@@ -872,7 +879,9 @@ part of no week.
 
 The L<__on_date()|/__on_date> text for the given date, with a leading
 "\n" if there is in fact an event on that date. This makes '%Ex%n%ED'
-produce exactly the same text as L<__on_date()|/__on_date>.
+produce exactly the same text as (e.g.)
+L<Date::Tolkien::Shire|Date::Tolkien::Shire>
+L<on_date()|Date::Tolkien::Shire/on_date>.
 
 =item %Ed
 
@@ -885,6 +894,24 @@ The full holiday name, or C<''> for non-holidays.
 =item %Ee
 
 The abbreviated holiday name, or C<''> for non-holidays.
+
+=item %EF
+
+The L<__on_date_accented()|/__on_date_accented> text for the given date,
+with a leading "\n" if there is in fact an event on that date. This
+makes '%Ex%n%EF' produce the accented version of (e.g.)
+L<Date::Tolkien::Shire|Date::Tolkien::Shire>
+L<on_date()|Date::Tolkien::Shire/on_date>.
+
+See the L<__on_date_accented()|/__on_date_accented> documentation for
+some words about the use of accented characters.
+
+=item %Ef
+
+The L<__on_date_accented()|/__on_date_accented> text for the given date.
+
+See the L<__on_date_accented()|/__on_date_accented> documentation for
+some words about the use of accented characters.
 
 =item %Ex
 
