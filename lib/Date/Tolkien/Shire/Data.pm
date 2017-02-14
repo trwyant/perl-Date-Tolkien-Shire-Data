@@ -122,6 +122,13 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 
 	if ( HASH_REF eq $ref ) {
 	    my %hash = %{ $date };
+	    if ( $hash{month} ) {
+		$hash{holiday} = 0;
+	    } else {
+		$hash{holiday}
+		    or $hash{holiday} = $hash{day};
+		$hash{day} = 0;
+	    }
 	    $date = bless \%hash, join '::', __PACKAGE__, 'Date';
 	}
 
@@ -807,6 +814,14 @@ methods). The methods (or keys) used are:
 
 The first seven are heavily used. The last four are used only by
 C<'%N'>, C<'%s'>, C<'%z'>, and C<'%Z'> respectively.
+
+If you pass a hash, the canonical say specification is either a
+non-zero C<month> and C<day> and zero C<holiday>, or vice versa. But if
+you pass a zero C<month> and C<holiday>, the method will assume that you
+were specifying a holiday and adjust the hash accordingly, though this
+adjustment will not be visible outside C<__format()>. Also, your hash
+need not specify C<day_of_week> since it can be computed from C<month>
+and C<day>, or C<holiday>.
 
 The following conversion specifications (to use C<strftime()>
 terminology) or patterns (to use L<DateTime|DateTime> terminology) are
