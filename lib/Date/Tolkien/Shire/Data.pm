@@ -140,6 +140,10 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	    } or Carp::croak( FORMAT_DATE_ERROR );
 	}
 
+	my $ctx = {
+	    prefix_new_line_unless_empty	=> 0,
+	};
+
 	$tplt =~ s/ % (?: [{]  ( \w+ ) [}]	# method ($1)
 	    | [{]{2} ( .*? ) [}]{2}		# condition ($2)
 	    | ( [0-9]+ ) N			# %nnnN ($3)
@@ -147,7 +151,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	) /
 	    $1 ? ( $date->can( $1 ) ? $date->$1() : "%{$1}" ) :
 	    $2 ? _fmt_cond( $date, $2 ) :
-	    $4 ? _fmt_conv( $date, $4 ) :
+	    $4 ? _fmt_conv( $date, $4, $ctx ) :
 	    _fmt_nano( $date, $3 )
 	/smxeg;
 
@@ -194,22 +198,13 @@ sub _fmt_get_md {
 	d	=> sub { sprintf '%02d', $_[0]->day() || $_[0]->holiday() },
 	EA	=> sub { __trad_weekday_name( $_[0]->day_of_week() ) },
 	Ea	=> sub { __trad_weekday_short( $_[0]->day_of_week() ) },
-	ED	=> sub {
-	    my $d = __on_date( _fmt_get_md( $_[0] ) );
-	    defined $d
-		and $d = "\n$d";
-	    return $d;
+	ED	=> sub { $_[1]{on_date_accented} = 1;
+	    goto &_fmt_on_date;
 	},
-	Ed	=> sub { __on_date( _fmt_get_md( $_[0] ) ) },
+	Ed	=> \&_fmt_on_date,
 	EE	=> sub { __holiday_name( $_[0]->holiday() || 0 ) },
 	Ee	=> sub { __holiday_short( $_[0]->holiday() || 0 ) },
-	EF	=> sub {
-	    my $d = __on_date_accented( _fmt_get_md( $_[0] ) );
-	    defined $d
-		and $d = "\n$d";
-	    return $d;
-	},
-	Ef	=> sub { __on_date_accented( _fmt_get_md( $_[0] ) ) },
+	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
 		'%{{%A %e %B %Y||%A %EE %Y||%EE %Y}}' ) },
 	e	=> sub { sprintf '%2d', $_[0]->day() || $_[0]->holiday() },
@@ -256,12 +251,12 @@ sub _fmt_get_md {
     $spec{X} = $spec{r};	# I think this is right ...
 
     sub _fmt_conv {
-	my ( $date, $rslt ) = @_;
+	my ( $date, $rslt, $ctx ) = @_;
 	my $code;
 	if ( $code = $spec{$rslt} ) {
-	    $rslt = $code->( $date );
+	    $rslt = $code->( $date, $ctx );
 	} elsif ( 1 < length $rslt and $code = $spec{ substr $rslt, 1 } ) {
-	    $rslt = $code->( $date );
+	    $rslt = $code->( $date, $ctx );
 	}
 	return defined $rslt ? $rslt : '';
     }
@@ -281,6 +276,18 @@ sub _fmt_offset {
     return $sec ?
 	sprintf( '%s%02d%02d%02d', $sign, $hr, $min, $sec ) :
 	sprintf( '%s%02d%02d', $sign, $hr, $min );
+}
+
+sub _fmt_on_date {
+    my ( $date, $ctx ) = @_;
+    my @md = _fmt_get_md( $date );
+    my $pfx = "\n" x $ctx->{prefix_new_line_unless_empty};
+    $ctx->{prefix_new_line_unless_empty} = 0;
+    defined( my $on_date = delete $ctx->{on_date_accented} ?
+	__on_date_accented( @md ) :
+	__on_date( @md )
+    ) or return undef;	## no critic (ProhibitExplicitReturnUndef)
+    return "$pfx$on_date";
 }
 
 sub _fmt_nano {
@@ -573,7 +580,6 @@ sub __is_leap_year {
     }
 }
 
-# TODO In a leap year, day 366 is assigned to the wrong year.
 sub __rata_die_to_year_day {
     my ( $rata_die ) = @_;
 
@@ -892,15 +898,18 @@ part of no week.
 
 =item %ED
 
-The L<__on_date()|/__on_date> text for the given date, with a leading
-"\n" if there is in fact an event on that date. This makes '%Ex%n%ED'
-produce exactly the same text as (e.g.)
-L<Date::Tolkien::Shire|Date::Tolkien::Shire>
-L<on_date()|Date::Tolkien::Shire/on_date>.
+The L<__on_date_accented()|/__on_date_accented> text for the given date.
+
+You can get a leading C<"\n"> if there was an actual event using
+C<'%En%ED'>.
 
 =item %Ed
 
 The L<__on_date()|/__on_date> text for the given date.
+
+You can get a leading C<"\n"> if there was an actual event using
+C<'%En%Ed'>. So to mimic L<Date::Tolkien::Shire|Date::Tolkien::Shire>
+L<on_date()|Date::Tolkien::Shire/on_date>, use C<'%Ex%n%En%Ed'>.
 
 =item %EE
 
@@ -910,23 +919,11 @@ The full holiday name, or C<''> for non-holidays.
 
 The abbreviated holiday name, or C<''> for non-holidays.
 
-=item %EF
+=item %En
 
-The L<__on_date_accented()|/__on_date_accented> text for the given date,
-with a leading "\n" if there is in fact an event on that date. This
-makes '%Ex%n%EF' produce the accented version of (e.g.)
-L<Date::Tolkien::Shire|Date::Tolkien::Shire>
-L<on_date()|Date::Tolkien::Shire/on_date>.
-
-See the L<__on_date_accented()|/__on_date_accented> documentation for
-some words about the use of accented characters.
-
-=item %Ef
-
-The L<__on_date_accented()|/__on_date_accented> text for the given date.
-
-See the L<__on_date_accented()|/__on_date_accented> documentation for
-some words about the use of accented characters.
+Inserts nothing, but causes the next C<%Ed> or C<%ED> (and B<only> the
+next one) to have a C<"\n"> prefixed if there was an actual event on the
+date.
 
 =item %Ex
 

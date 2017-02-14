@@ -8,7 +8,7 @@ use warnings;
 use Date::Tolkien::Shire::Data qw{ __format __on_date __on_date_accented };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 156;
+plan tests => 165;
 
 my $normal = {
     year	=> 1419,
@@ -74,20 +74,35 @@ is( __format( $normal,  '%Ea' ), 'Sun', q<%Ea on 25 Rethe 1419> );
 is( __format( $holiday, '%Ea' ), 'Hig', q<%Ea on 1 Lithe 1419> );
 is( __format( $special, '%Ea' ), '', q<%Ea on Midyear's day 1419> );
 
-sub _ED {
-    my ( $month, $day ) = @_;
-    my $rslt = __on_date( $month, $day );
-    defined $rslt
-	and return "\n$rslt";
-    return $rslt;
-}
+# Brought forward because it effects %Ed and %ED
+is( __format( $normal,  '%En' ), '', q<%En on 25 Rethe 1419> );
+is( __format( $holiday, '%En' ), '', q<%En on 1 Lithe 1419> );
+is( __format( $special, '%En' ), '', q<%En on Midyear's day 1419> );
 
-is( __format( $normal,  '%ED' ), _ED( 3, 25 ),
+is( __format( $normal,  '%ED' ), __on_date_accented( 3, 25 ),
     q<%ED on 25 Rethe 1419> );
-is( __format( $holiday, '%ED' ), _ED( 0, 2 ) || '',
+is( __format( $holiday, '%ED' ), __on_date_accented( 0, 2 ) || '',
     q<%ED on 1 Lithe 1419> );
-is( __format( $special, '%ED' ), _ED( 0, 3 ),
+is( __format( $special, '%ED' ), __on_date_accented( 0, 3 ),
     q<%ED on Midyear's day 1419> );
+
+is( __format( $normal,  '%En%ED' ), "\n" . __on_date_accented( 3, 25 ),
+    q<%En%ED on 25 Rethe 1419> );
+is( __format( $holiday, '%En%ED' ), '',
+    q<%En%ED on 1 Lithe 1419> );
+is( __format( $special, '%En%ED' ), "\n" . __on_date_accented( 0, 3 ),
+    q<%En%ED on Midyear's day 1419> );
+
+# The purpose of the following three tests is to demonstrate that %En
+# gets cleared after %ED
+is( __format( $normal,  '%En%ED%ED' ),
+    "\n" . __on_date_accented( 3, 25 ) . __on_date_accented( 3, 25 ),
+    q<%En%ED%ED on 25 Rethe 1419> );
+is( __format( $holiday, '%En%ED%ED' ), '',
+    q<%En%ED%ED on 1 Lithe 1419> );
+is( __format( $special, '%En%ED%ED' ),
+    "\n" . __on_date_accented( 0, 3 ) . __on_date_accented( 0, 3 ),
+    q<%En%ED%ED on Midyear's day 1419> );
 
 is( __format( $normal,  '%Ed' ), __on_date( 3, 25 ),
     q<%Ed on 25 Rethe 1419> );
@@ -95,6 +110,24 @@ is( __format( $holiday, '%Ed' ), __on_date( 0, 2 ) || '',
     q<%Ed on 1 Lithe 1419> );
 is( __format( $special, '%Ed' ), __on_date( 0, 3 ),
     q<%Ed on Midyear's day 1419> );
+
+is( __format( $normal,  '%En%Ed' ), "\n" . __on_date( 3, 25 ),
+    q<%En%Ed on 25 Rethe 1419> );
+is( __format( $holiday, '%En%Ed' ), '',
+    q<%En%Ed on 1 Lithe 1419> );
+is( __format( $special, '%En%Ed' ), "\n" . __on_date( 0, 3 ),
+    q<%En%Ed on Midyear's day 1419> );
+
+# The purpose of the following three tests is to demonstrate that %En
+# gets cleared after %Ed
+is( __format( $normal,  '%En%Ed%Ed' ),
+    "\n" . __on_date( 3, 25 ) . __on_date( 3, 25 ),
+    q<%En%Ed%Ed on 25 Rethe 1419> );
+is( __format( $holiday, '%En%Ed%Ed' ), '',
+    q<%En%Ed%Ed on 1 Lithe 1419> );
+is( __format( $special, '%En%Ed%Ed' ),
+    "\n" . __on_date( 0, 3 ) . __on_date( 0, 3 ),
+    q<%En%Ed%Ed on Midyear's day 1419> );
 
 is( __format( $normal,  '%EE' ), '', q<%EE on 25 Rethe 1419> );
 is( __format( $holiday, '%EE' ), '1 Lithe', q<%EE on 1 Lithe 1419> );
@@ -105,27 +138,7 @@ is( __format( $normal,  '%Ee' ), '', q<%Ee on 25 Rethe 1419> );
 is( __format( $holiday, '%Ee' ), '1Li', q<%Ee on 1 Lithe 1419> );
 is( __format( $special, '%Ee' ), 'Myd', q<%Ee on Midyear's day 1419> );
 
-sub _EF {
-    my ( $month, $day ) = @_;
-    my $rslt = __on_date( $month, $day );
-    defined $rslt
-	and return "\n$rslt";
-    return $rslt;
-}
-
-is( __format( $normal,  '%EF' ), _EF( 3, 25 ),
-    q<%EF on 25 Rethe 1419> );
-is( __format( $holiday, '%EF' ), _EF( 0, 2 ) || '',
-    q<%EF on 1 Lithe 1419> );
-is( __format( $special, '%EF' ), _EF( 0, 3 ),
-    q<%EF on Midyear's day 1419> );
-
-is( __format( $normal,  '%Ef' ), __on_date_accented( 3, 25 ),
-    q<%Ef on 25 Rethe 1419> );
-is( __format( $holiday, '%Ef' ), __on_date_accented( 0, 2 ) || '',
-    q<%Ef on 1 Lithe 1419> );
-is( __format( $special, '%Ef' ), __on_date_accented( 0, 3 ),
-    q<%Ef on Midyear's day 1419> );
+# %Ex is deferred until all component formats have been tested.
 
 is( __format( $normal,  '%e' ), '25', q<%e on 25 Rethe 1419> );
 is( __format( $holiday, '%e' ), ' 2', q<%e on 1 Lithe 1419> );
