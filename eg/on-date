@@ -28,8 +28,8 @@ EOD
 1 == @ARGV
     and unshift @ARGV, 0;
 
-my $tplt = '%{{%A %e %B||%A %EE||%EE}}%n' . (
-    $opt{accented} ? '%EF' : '%ED' );
+my $tplt = '%{{%A %e %B||%A %EE||%EE}}%n%En' . (
+    $opt{accented} ? '%ED' : '%Ed' );
 
 # Uncomment the following if you KNOW you will be running this script
 # under at least Perl 5.8, and you don't have to mess with 'perl -C'.
