@@ -1,3 +1,16 @@
+0.000_008	2017-02-14	T. R. Wyant
+    Change __format() format %ED to do __on_date_accented(). The
+    previous functionality of %ED is obtained (for both %ED and %Ed) by
+    putting %En before. This causes %ED and %Ed to add a leading "\n",
+    but only if their result is defined.
+
+    Have __format() interpret { month = >0, day => number } as being
+    equivalent to { holiday => number }, when invoked with a hash rather
+    than an object.
+
+    Add eg/on-date option -accented, which gives you accented proper
+    nouns.
+
 0.000_007	2017-02-13	T. R. Wyant
     First CPAN release.
 
