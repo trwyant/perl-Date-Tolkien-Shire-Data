@@ -147,11 +147,11 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	$tplt =~ s/ % (?: [{]  ( \w+ ) [}]	# method ($1)
 	    | [{]{2} ( .*? ) [}]{2}		# condition ($2)
 	    | ( [0-9]+ ) N			# %nnnN ($3)
-	    | ( [EO]? . )			# conv spec ($4)
+	    | ( [-_0^]? ) ( [0-9]* ) ( [EO]? . ) # conv spec ($4,$5,$6)
 	) /
 	    $1 ? ( $date->can( $1 ) ? $date->$1() : "%{$1}" ) :
 	    $2 ? _fmt_cond( $date, $2 ) :
-	    $4 ? _fmt_conv( $date, $4, $ctx ) :
+	    $6 ? _fmt_conv( $date, $6, $4, $5, $ctx ) :
 	    _fmt_nano( $date, $3 )
 	/smxeg;
 
@@ -192,52 +192,75 @@ sub _fmt_get_md {
 	a	=> sub { __weekday_short( $_[0]->day_of_week() ) },
 	B	=> sub { __month_name( $_[0]->month() ) },
 	b	=> sub { __month_short( $_[0]->month() ) },
-	C	=> sub { sprintf '%02d', int( $_[0]->year() / 100 ) },
+	C	=> sub {
+		    $_[2] = int( $_[0]->year() / 100 );
+		    goto &_fmt_number_02;
+		},
 	c	=> sub { __format( $_[0], '%{{%a %x||||%x}} %X' ) },
 	D	=> sub { __format( $_[0], '%{{%m/%d||%Ee}}/%y' ) },
-	d	=> sub { sprintf '%02d', $_[0]->day() || $_[0]->holiday() },
+	d	=> sub {
+		    $_[2] = $_[0]->day() || $_[0]->holiday();
+		    goto &_fmt_number_02;
+		},
 	EA	=> sub { __trad_weekday_name( $_[0]->day_of_week() ) },
 	Ea	=> sub { __trad_weekday_short( $_[0]->day_of_week() ) },
 	ED	=> sub { $_[1]{on_date_accented} = 1;
-	    goto &_fmt_on_date;
-	},
+		    goto &_fmt_on_date;
+		},
 	Ed	=> \&_fmt_on_date,
 	EE	=> sub { __holiday_name( $_[0]->holiday() || 0 ) },
 	Ee	=> sub { __holiday_short( $_[0]->holiday() || 0 ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
-		'%{{%A %e %B %Y||%A %EE %Y||%EE %Y}}' ) },
-	e	=> sub { sprintf '%2d', $_[0]->day() || $_[0]->holiday() },
+		'%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
+	e	=> sub {
+		    $_[2] = $_[0]->day() || $_[0]->holiday();
+		    goto &_fmt_number__2;
+		},
 	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}' ) },
 #	G	Same as Y by definition of Shire calendar
-	H	=> sub { sprintf '%02d', $_[0]->hour() || 0 },
+	H	=> sub { $_[2] = $_[0]->hour(); goto &_fmt_number_02 },
 #	h	Same as b by definition of strftime()
-	I	=> sub { sprintf '%02d', ( $_[0]->hour() || 0 ) % 12 || 12 },
-	j	=> sub { sprintf '%03d', __date_to_day_of_year(
-		$_[0]->year(), _fmt_get_md( $_[0] ) ) },
-	k	=> sub { sprintf '%2d', $_[0]->hour() || 0 },
-	l	=> sub { sprintf '%2d', ( $_[0]->hour() || 0 ) % 12 || 12 },
-	M	=> sub { sprintf '%02d', $_[0]->minute() || 0 },
-	m	=> sub { sprintf '%02d', $_[0]->month() || 0 },
+	I	=> sub {
+		    $_[2] = ( $_[0]->hour() || 0 ) % 12 || 12;
+		    goto &_fmt_number_02;
+		},
+	j	=> sub {
+		    $_[1]{wid} = 3;
+		    defined $_[1]{pad}
+			or $_[1]{pad} = '0';
+		    $_[2] = __date_to_day_of_year(
+			$_[0]->year(), _fmt_get_md( $_[0] ) );
+		    goto &_fmt_number;
+		},
+	k	=> sub { $_[2] = $_[0]->hour(); goto &_fmt_number__2; },
+	l	=> sub {
+		    $_[2] = ( $_[0]->hour() || 0 ) % 12 || 12;
+		    goto &_fmt_number__2;
+		},
+	M	=> sub { $_[2] = $_[0]->minute(); goto &_fmt_number_02; },
+	m	=> sub { $_[2] = $_[0]->month(); goto &_fmt_number_02; },
 	N	=> \&_fmt_nano,
 	n	=> sub { "\n" },
 	P	=> sub { ( $_[0]->hour() || 0 ) > 11 ? 'pm' : 'am' },
 	p	=> sub { ( $_[0]->hour() || 0 ) > 11 ? 'PM' : 'AM' },
 	R	=> sub { __format( $_[0], '%H:%M' ) },
 	r	=> sub { __format( $_[0], '%I:%M:%S %p' ) },
-	S	=> sub { sprintf '%02s', $_[0]->second() || 0 },
+	S	=> sub { $_[2] = $_[0]->second(); goto &_fmt_number_02; },
 	s	=> sub { $_[0]->epoch() },
 	T	=> sub { __format( $_[0], '%H:%M:%S' ) },
 	t	=> sub { "\t" },
-	U	=> sub { sprintf '%02d', __week_of_year(
-		_fmt_get_md( $_[0] ) ) },
+	U	=> sub {
+		    $_[2] = __week_of_year( _fmt_get_md( $_[0] ) );
+		    goto &_fmt_number_02;
+		},
 	u	=> sub { $_[0]->day_of_week() },
 #	V	Same as U by definition of Shire calendar
 #	W	Same as U by definition of Shire calendar
 #	X	Same as r, I think
 	x	=> sub { __format( $_[0], '%{{%e %b %Y||%Ee %Y}}' ) }, 
 	Y	=> sub { $_[0]->year() },
-	y	=> sub { sprintf '%02d', $_[0]->year() % 100 },
+	y	=> sub { $_[2] = $_[0]->year() % 100; goto &_fmt_number_02 },
 	Z	=> sub { $_[0]->time_zone_short_name() },
 	z	=> sub { _fmt_offset( $_[0]->offset() ) },
     );
@@ -250,16 +273,72 @@ sub _fmt_get_md {
 				# the Shire calendar.
     $spec{X} = $spec{r};	# I think this is right ...
 
+    my %modifier_map = (
+	0	=> sub { $_[0]{pad} = '0' },
+	'-'	=> sub { $_[0]{pad} = '' },
+	_	=> sub { $_[0]{pad} = ' ' },
+	'^'	=> sub { $_[0]{uc} = 1 },
+	# TODO '#' => sub { $_[0]{change_case} = 1 },
+	# A read of the source of Glib strftime_l.c says that this
+	# converts to lower case for %Z (long zone) and %p (AM/PM), and
+	# to upper case for %A, %a, %B, %b, %h. It has no effect on
+	# anything else.
+    );
+
+    # Note that if I should choose to implement field widths, the width,
+    # if specified, causes padding with spaces if '-' (no padding) was
+    # specified.
+
     sub _fmt_conv {
-	my ( $date, $rslt, $ctx ) = @_;
+	my ( $date, $rslt, $mod, $wid, $ctx ) = @_;
+	defined $mod
+	    or $mod = '';
+	$wid
+	    and $ctx->{wid} = $wid;
 	my $code;
+	$code = $modifier_map{$mod}
+	    and $code->( $ctx );
+	if ( $wid ) {
+	    $ctx->{wid} = $wid;
+	    defined $ctx->{pad}
+		and '' eq $ctx->{pad}
+		and $ctx->{pad} = ' ';
+	}
 	if ( $code = $spec{$rslt} ) {
 	    $rslt = $code->( $date, $ctx );
 	} elsif ( 1 < length $rslt and $code = $spec{ substr $rslt, 1 } ) {
 	    $rslt = $code->( $date, $ctx );
 	}
-	return defined $rslt ? $rslt : '';
+	defined $rslt
+	    or $rslt = '';
+	delete $ctx->{uc}
+	    and $rslt = uc $rslt;
+	my $need;
+	$ctx->{wid}
+	    and '' ne $ctx->{pad}
+	    and ( $need = $ctx->{wid} - length $rslt ) > 0
+	    and $rslt = ( $ctx->{pad} x $need ) . $rslt;
+	delete @{ $ctx }{ qw{ pad wid } };
+	return $rslt;
     }
+}
+
+sub _fmt_number {
+    my ( undef, $ctx, $val ) = @_;	# Invocant unused
+    $val = defined $val ? "$val" : '0';
+    defined $ctx->{pad}
+	or $ctx->{pad} = '0';
+    defined $ctx->{wid}
+	or $ctx->{wid} = 2;
+    return defined $val ? "$val" : '0';
+}
+
+*_fmt_number_02 = \&_fmt_number;
+
+sub _fmt_number__2 {
+    defined $_[1]{pad}
+	or $_[1]{pad} = ' ';
+    goto &_fmt_number;
 }
 
 sub _fmt_offset {
@@ -1109,6 +1188,43 @@ right curly bracket or vertical bar as part of a format, separate them
 with percent signs (i.e. C<'|%|%|'>.
 
 =back
+
+Some of the Glibc extensions are implemented on some of the conversion
+specifications, typically where the author felt a need for them. The
+following flag characters may be specified immediately after the C<'%'>:
+
+=over
+
+=item - (dash)
+
+This flag specifies no padding at all. That is to say, on the first of
+the month, both C<'%-d'> and C<'%-e'> produce C<'1'>, not C<'01'> or
+C<' 1'> respectively.
+
+If an explicit field width is specified (see below), this specifies
+space padding.
+
+=item _ (underscore)
+
+This flag specifies padding with spaces. That is to say, on the first of
+the month, C<'%_d'> produce C<' 1'>, not C<'01'>. So does C<'%_e'>, in
+case you were wondering.
+
+=item 0 (zero)
+
+This flag specifies padding with zeroes. That is to say, on the first of
+the month, C<'%0e'> produce C<'01'>, not C<' 1'>. So does C<'%0d'>, in
+case you were wondering.
+
+=item ^
+
+This flag specifies making the result upper-case.
+
+=back
+
+Immediately after the flags (if any) you can specify a field width that
+overrides the default. If you explicitly specify field width, flag
+C<'-'> pads with spaces, even in numeric fields.
 
 =head2 __holiday_name
 

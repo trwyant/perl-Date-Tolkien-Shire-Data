@@ -8,7 +8,7 @@ use warnings;
 use Date::Tolkien::Shire::Data qw{ __format __on_date __on_date_accented };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 165;
+plan tests => 177;
 
 my $normal = {
     year	=> 1419,
@@ -41,6 +41,10 @@ is( __format( $special, '%{year}' ), '1419', q<%{year} on Midyear's day 1419> );
 is( __format( $normal,  '%A' ), 'Sunday', q<%A on 25 Rethe 1419> );
 is( __format( $holiday, '%A' ), 'Highday', q<%A on 1 Lithe 1419> );
 is( __format( $special, '%A' ), '', q<%A on Midyear's day 1419> );
+
+is( __format( $normal,  '%^A' ), 'SUNDAY', q<%^A on 25 Rethe 1419> );
+is( __format( $holiday, '%^A' ), 'HIGHDAY', q<%^A on 1 Lithe 1419> );
+is( __format( $special, '%^A' ), '', q<%^A on Midyear's day 1419> );
 
 is( __format( $normal,  '%a' ), 'Sun', q<%a on 25 Rethe 1419> );
 is( __format( $holiday, '%a' ), 'Hig', q<%a on 1 Lithe 1419> );
@@ -181,6 +185,20 @@ is( __format( $special, '%M' ), '02', q<%M on Midyear's day 1419> );
 is( __format( $normal,  '%m' ), '03', q<%m on 25 Rethe 1419> );
 is( __format( $holiday, '%m' ), '00', q<%m on 1 Lithe 1419> );
 is( __format( $special, '%m' ), '00', q<%m on Midyear's day 1419> );
+
+is( __format( $normal,  '%-m' ), '3', q<%-m on 25 Rethe 1419> );
+is( __format( $normal,  '%_m' ), ' 3', q<%_m on 25 Rethe 1419> );
+is( __format( $normal,  '%0m' ), '03', q<%0m on 25 Rethe 1419> );
+
+is( __format( $normal,  '%-4m' ), '   3', q<%-4m on 25 Rethe 1419> );
+is( __format( $normal,  '%_4m' ), '   3', q<%_4m on 25 Rethe 1419> );
+is( __format( $normal,  '%4m' ), '0003', q<%4m on 25 Rethe 1419> );
+
+# The purpose of the following three tests is to ensure that the Glibc
+# flags are cleared after use.
+is( __format( $normal,  '%-m%m' ), '303', q<%-m%m on 25 Rethe 1419> );
+is( __format( $normal,  '%_m%m' ), ' 303', q<%-m%m on 25 Rethe 1419> );
+is( __format( $normal,  '%0m%m' ), '0303', q<%-m on 25 Rethe 1419> );
 
 is( __format( $normal,  '%n' ), "\n", q<%n on 25 Rethe 1419> );
 is( __format( $holiday, '%n' ), "\n", q<%n on 1 Lithe 1419> );
