@@ -28,7 +28,7 @@ EOD
 1 == @ARGV
     and unshift @ARGV, 0;
 
-my $tplt = '%{{%A %e %B||%A %EE||%EE}}%n%En' . (
+my $tplt = '%Ex%n%En' . (
     $opt{accented} ? '%ED' : '%Ed' );
 
 # Uncomment the following if you KNOW you will be running this script
