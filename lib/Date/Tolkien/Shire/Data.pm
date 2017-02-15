@@ -146,13 +146,11 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 
 	$tplt =~ s/ % (?: [{]  ( \w+ ) [}]	# method ($1)
 	    | [{]{2} ( .*? ) [}]{2}		# condition ($2)
-	    | ( [0-9]+ ) N			# %nnnN ($3)
-	    | ( [-_0^#]* ) ( [0-9]* ) ( [EO]? . ) # conv spec ($4,$5,$6)
+	    | ( [-_0^#]* ) ( [0-9]* ) ( [EO]? . ) # conv spec ($3,$4,$5)
 	) /
 	    $1 ? ( $date->can( $1 ) ? $date->$1() : "%{$1}" ) :
 	    $2 ? _fmt_cond( $date, $2 ) :
-	    $6 ? _fmt_conv( $date, $6, $4, $5, $ctx ) :
-	    _fmt_nano( $date, $3 )
+	    _fmt_conv( $date, $5, $3, $4, $ctx )
 	/smxeg;
 
 	return $tplt;
@@ -226,9 +224,8 @@ sub _fmt_get_md {
 		    goto &_fmt_number_02;
 		},
 	j	=> sub {
-		    $_[1]{wid} = 3;
-		    defined $_[1]{pad}
-			or $_[1]{pad} = '0';
+		    defined $_[1]{wid}
+			or $_[1]{wid} = 3;
 		    $_[2] = __date_to_day_of_year(
 			$_[0]->year(), _fmt_get_md( $_[0] ) );
 		    goto &_fmt_number;
@@ -240,7 +237,12 @@ sub _fmt_get_md {
 		},
 	M	=> sub { $_[2] = $_[0]->minute(); goto &_fmt_number_02; },
 	m	=> sub { $_[2] = $_[0]->month(); goto &_fmt_number_02; },
-	N	=> \&_fmt_nano,
+	N	=> sub {
+		    defined $_[1]{wid}
+			or $_[1]{wid} = 9;
+		    $_[2] = $_[0]->nanosecond();
+		    goto &_fmt_number;
+		},
 	n	=> sub { "\n" },
 	P	=> sub { ( $_[0]->hour() || 0 ) > 11 ? 'pm' : 'am' },
 	p	=> sub { ( $_[0]->hour() || 0 ) > 11 ? 'PM' : 'AM' },
@@ -379,12 +381,6 @@ sub _fmt_on_date {
 	__on_date( @md )
     ) or return undef;	## no critic (ProhibitExplicitReturnUndef)
     return "$pfx$on_date";
-}
-
-sub _fmt_nano {
-    my ( $date, $places ) = @_;
-    $places ||= 9;
-    return substr sprintf( '%09u', $date->nanosecond() || 0 ), 0, $places;
 }
 
 {
