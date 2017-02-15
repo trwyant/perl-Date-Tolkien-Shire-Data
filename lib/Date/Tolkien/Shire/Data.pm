@@ -18,7 +18,7 @@ use Text::Abbrev();
 use Exporter ();
 our @ISA = qw{ Exporter };
 
-our $VERSION = '0.000_008';
+our $VERSION = '0.000_009';
 
 our @EXPORT_OK = qw{
     __date_to_day_of_year

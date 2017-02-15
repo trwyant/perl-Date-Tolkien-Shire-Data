@@ -1,3 +1,25 @@
+0.000_009	2017-02-15	T. R. Wyant
+    Ditch special-case __format() code for '%N'.  With the
+    implementation of Glibc field widths, this can now just go through
+    normal numeric processing, and (I hope) quash an error found by
+    Andreas König's smoker.
+
+    Converge __format() toward Glibc extensions:
+    - Add user-specified field width.
+    - Add '0', '_', and '-' padding flags.
+    - Add '^' and '#' case-change flags.
+    - Unrecognized specifications are left as-is, except for the actions
+      of flags. So '%.' remains '%.', rather than becoming '.' as the
+      BSD functionality would have it. And '%Ez' remains '%Ez' rather
+      than being interpreted the same as '%z'. But '%^Ez' becomes
+      '%^EZ', which looks like a bug to me, but that's what Glibc
+      strftime() does.
+
+    Use '%-e' in the implementation of '%Ex', to mimic better the
+    historical output of (e.g.) Date::Tolkien::Shire->on_date().
+
+    Add '%v' (OK, that's a BSD extension, but I could not resist).
+
 0.000_008	2017-02-14	T. R. Wyant
     Change __format() format %ED to do __on_date_accented(). The
     previous functionality of %ED is obtained (for both %ED and %Ed) by
