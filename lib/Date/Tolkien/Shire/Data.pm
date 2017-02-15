@@ -147,7 +147,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	$tplt =~ s/ % (?: [{]  ( \w+ ) [}]	# method ($1)
 	    | [{]{2} ( .*? ) [}]{2}		# condition ($2)
 	    | ( [0-9]+ ) N			# %nnnN ($3)
-	    | ( [-_0^]? ) ( [0-9]* ) ( [EO]? . ) # conv spec ($4,$5,$6)
+	    | ( [-_0^#]* ) ( [0-9]* ) ( [EO]? . ) # conv spec ($4,$5,$6)
 	) /
 	    $1 ? ( $date->can( $1 ) ? $date->$1() : "%{$1}" ) :
 	    $2 ? _fmt_cond( $date, $2 ) :
@@ -256,6 +256,7 @@ sub _fmt_get_md {
 		},
 	u	=> sub { $_[0]->day_of_week() },
 #	V	Same as U by definition of Shire calendar
+	v	=> sub { __format( $_[0], '%{{%e-%b-%Y||%Ee-%Y}}' ) },
 #	W	Same as U by definition of Shire calendar
 #	X	Same as r, I think
 	x	=> sub { __format( $_[0], '%{{%e %b %Y||%Ee %Y}}' ) }, 
@@ -263,6 +264,7 @@ sub _fmt_get_md {
 	y	=> sub { $_[2] = $_[0]->year() % 100; goto &_fmt_number_02 },
 	Z	=> sub { $_[0]->time_zone_short_name() },
 	z	=> sub { _fmt_offset( $_[0]->offset() ) },
+	'%'	=> sub { '%' },
     );
     $spec{G} = $spec{Y};	# By definition of Shire calendar.
     $spec{h} = $spec{b};	# By definition of strftime().
@@ -272,45 +274,55 @@ sub _fmt_get_md {
 				# %w makes no sense to me in terms of
 				# the Shire calendar.
     $spec{X} = $spec{r};	# I think this is right ...
+    $spec{'{'} = $spec{'}'} = $spec{'|'} = $spec{'%'};
 
     my %modifier_map = (
 	0	=> sub { $_[0]{pad} = '0' },
 	'-'	=> sub { $_[0]{pad} = '' },
 	_	=> sub { $_[0]{pad} = ' ' },
 	'^'	=> sub { $_[0]{uc} = 1 },
-	# TODO '#' => sub { $_[0]{change_case} = 1 },
-	# A read of the source of Glib strftime_l.c says that this
-	# converts to lower case for %Z (long zone) and %p (AM/PM), and
-	# to upper case for %A, %a, %B, %b, %h. It has no effect on
-	# anything else.
+	'#'	=> sub { $_[0]{change_case} = 1 },
     );
+
+    my %case_change = map { $_ => sub { uc $_[0] } }
+	qw{ A a B b EA Ea EE Ee h };
+    $case_change{p} = $case_change{Z} = sub { lc $_[0] };
 
     # Note that if I should choose to implement field widths, the width,
     # if specified, causes padding with spaces if '-' (no padding) was
     # specified.
 
     sub _fmt_conv {
-	my ( $date, $rslt, $mod, $wid, $ctx ) = @_;
+	my ( $date, $conv, $mod, $wid, $ctx ) = @_;
 	defined $mod
 	    or $mod = '';
 	$wid
 	    and $ctx->{wid} = $wid;
 	my $code;
-	$code = $modifier_map{$mod}
-	    and $code->( $ctx );
+	foreach my $char ( split qr{}, $mod ) {
+	    $code = $modifier_map{$char}
+		and $code->( $ctx );
+	}
 	if ( $wid ) {
 	    $ctx->{wid} = $wid;
 	    defined $ctx->{pad}
 		and '' eq $ctx->{pad}
 		and $ctx->{pad} = ' ';
 	}
-	if ( $code = $spec{$rslt} ) {
+	my $rslt;
+	if ( $code = $spec{$conv} ) {
 	    $rslt = $code->( $date, $ctx );
-	} elsif ( 1 < length $rslt and $code = $spec{ substr $rslt, 1 } ) {
+	} elsif ( 1 < length $conv and $code = $spec{ substr $conv, 1 } ) {
 	    $rslt = $code->( $date, $ctx );
+	} else {
+	    $rslt = "%$mod$wid$conv";
 	}
 	defined $rslt
 	    or $rslt = '';
+	if ( delete $ctx->{change_case} and $code = $case_change{$conv} ) {
+	    delete $ctx->{uc};
+	    $rslt = $code->( $rslt );
+	}
 	delete $ctx->{uc}
 	    and $rslt = uc $rslt;
 	my $need;
@@ -1122,6 +1134,11 @@ I have made this the same as C<'%U'>, because all Shire years start on
 the same day of the week, and I do not think the hobbits would
 understand or condone the idea of different starting days to a week.
 
+=item %v
+
+This is from the BSD version of strftime(), and is equivalent to
+C<'%{{%e %b %Y||%Ee %Y}}'>.
+
 =item %W
 
 I have made this the same as C<'%U'>. For my reasoning, see above under
@@ -1168,6 +1185,18 @@ The time zone offset.
 =item %%
 
 A literal percent sign.
+
+=item %{
+
+A literal left curly bracket.
+
+=item %}
+
+A literal right curly bracket.
+
+=item %|
+
+A literal vertical bar.
 
 =item %{method_name}
 
@@ -1219,6 +1248,18 @@ case you were wondering.
 =item ^
 
 This flag specifies making the result upper-case.
+
+=item #
+
+If applied to C<'%p'> or C<'%Z'>, this flag converts the output to lower
+case. It also overrides the C<'^'> flag if both are specified,
+regardless of order.
+
+If applied to C<'%A'>, C<'%a'>, C<'%B'>, C<'%b'> C<'%EA'>, C<'%Ea'>
+C<'%EE'>, C<'%Ee'>, or C<'%h'>, this flag converts the output to lower
+case.
+
+If applied to anything else, this flag has no effect.
 
 =back
 

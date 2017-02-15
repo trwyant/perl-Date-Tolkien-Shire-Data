@@ -8,7 +8,7 @@ use warnings;
 use Date::Tolkien::Shire::Data qw{ __format __on_date __on_date_accented };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 177;
+plan tests => 186;
 
 my $normal = {
     year	=> 1419,
@@ -216,6 +216,16 @@ is( __format( $normal,  '%p' ), 'AM', q<%p on 25 Rethe 1419> );
 is( __format( $holiday, '%p' ), 'AM', q<%p on 1 Lithe 1419> );
 is( __format( $special, '%p' ), 'AM', q<%p on Midyear's day 1419> );
 
+is( __format( $normal,  '%#p' ), 'am', q<%#p on 25 Rethe 1419> );
+is( __format( $holiday, '%#p' ), 'am', q<%#p on 1 Lithe 1419> );
+is( __format( $special, '%#p' ), 'am', q<%#p on Midyear's day 1419> );
+
+# The point of the following is that '#' trumps '^', even if '^' is to
+# the right of '#'.
+is( __format( $normal,  '%#^p' ), 'am', q<%#^p on 25 Rethe 1419> );
+is( __format( $holiday, '%#^p' ), 'am', q<%#^p on 1 Lithe 1419> );
+is( __format( $special, '%#^p' ), 'am', q<%#^p on Midyear's day 1419> );
+
 is( __format( $normal,  '%R' ), '00:00', q<%R on 25 Rethe 1419> );
 is( __format( $holiday, '%R' ), '00:00', q<%R on 1 Lithe 1419> );
 is( __format( $special, '%R' ), '01:02', q<%R on Midyear's day 1419> );
@@ -249,6 +259,10 @@ is( __format( $special, '%u' ), '0', q<%u on Midyear's day 1419> );
 is( __format( $normal,  '%V' ), '13', q<%V on 25 Rethe 1419> );
 is( __format( $holiday, '%V' ), '26', q<%V on 1 Lithe 1419> );
 is( __format( $special, '%V' ), '00', q<%V on Midyear's day 1419> );
+
+is( __format( $normal,  '%v' ), '25-Ret-1419', q<%v on 25 Rethe 1419> );
+is( __format( $holiday, '%v' ), '1Li-1419', q<%v on 1 Lithe 1419> );
+is( __format( $special, '%v' ), 'Myd-1419', q<%v on Midyear's day 1419> );
 
 is( __format( $normal,  '%W' ), '13', q<%W on 25 Rethe 1419> );
 is( __format( $holiday, '%W' ), '26', q<%W on 1 Lithe 1419> );
