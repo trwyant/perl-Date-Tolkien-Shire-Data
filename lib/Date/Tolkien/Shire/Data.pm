@@ -5,7 +5,6 @@ use 5.006002;
 use strict;
 use warnings;
 
-
 use charnames qw{ :full };
 
 use Carp ();
@@ -41,6 +40,7 @@ our %EXPORT_TAGS = (
     all	=> \@EXPORT_OK,
 );
 
+use constant ARRAY_REF	=> ref [];
 use constant CODE_REF	=> ref sub {};
 use constant HASH_REF	=> ref {};
 
@@ -52,13 +52,19 @@ use constant OVERLITHE_DAY_OF_YEAR	=> 184;
 
 use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 
+# Validation specifications used a lot
+
+use constant VALIDATE_UINT	=> [ qw{ UInt } ];
+
 {
 
     my @holiday = ( undef, 1, 7, 0, 0, 1, 7 );
     my @month_zero = ( undef, 0, 2, 4, 6, 1, 3, 0, 2, 4, 6, 1, 3 );
 
+    my $validate = _make_validator( qw{ UInt UInt } );
+
     sub __day_of_week {
-	my ( $month, $day ) = @_;
+	my ( $month, $day ) = $validate->( @_ );
 	$month
 	    or return $holiday[$day];
 	return ( $month_zero[$month] + $day ) % 7 + 1;
@@ -70,8 +76,10 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
     my @month_zero = ( undef, 1, 31, 61, 91, 121, 151, 185, 215, 245,
 	275, 305, 335 );
 
+    my $validate_d2doy = _make_validator( qw{ UInt UInt UInt } );
+
     sub __date_to_day_of_year {
-	my ( $year, $month, $day ) = @_;
+	my ( $year, $month, $day ) = $validate_d2doy->( @_ );
 
 	my $yd = $month ? $month_zero[$month] + $day :
 	$holiday_day[$day];
@@ -86,8 +94,10 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	return $yd;
     }
 
+    my $validate_doy2d = _make_validator( qw{ UInt UInt } );
+
     sub __day_of_year_to_date {
-	my ( $year, $yd ) = @_;
+	my ( $year, $yd ) = $validate_doy2d->( @_ );
 
 	unless ( __is_leap_year( $year ) ) {
 	    $yd >= OVERLITHE_DAY_OF_YEAR
@@ -114,8 +124,10 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 {
     use constant FORMAT_DATE_ERROR => 'Date must be object or hash';
 
+    my $validate = _make_validator( qw{ Hash|Object Scalar } );
+
     sub __format {
-	my ( $date, $tplt ) = @_;
+	my ( $date, $tplt ) = $validate->( @_ );
 
 	my $ref = ref $date
 	    or Carp::croak( FORMAT_DATE_ERROR );
@@ -127,7 +139,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	    } else {
 		$hash{holiday}
 		    or $hash{holiday} = $hash{day};
-		$hash{day} = 0;
+		$hash{month} = $hash{day} = 0;
 	    }
 	    $date = bless \%hash, join '::', __PACKAGE__, 'Date';
 	}
@@ -389,8 +401,10 @@ sub _fmt_on_date {
 	'1 Yule',
     );
 
+    my $validate_name = _make_validator( qw{ UInt } );
+
     sub __holiday_name {
-	my ( $holiday ) = @_;
+	my ( $holiday ) = $validate_name->( @_ );
 	return $name[ $holiday || 0 ];
     }
 
@@ -402,8 +416,12 @@ sub _fmt_on_date {
     $lookup->{m} = 3;
     $lookup->{o} = 4;
 
+    my $validate_name_to_num = _make_validator( qw{ Scalar } );
+
     sub __holiday_name_to_number {
-	my ( $holiday ) = _normalize_for_lookup( @_ );
+	my ( $holiday ) = _normalize_for_lookup(
+	    $validate_name_to_num->( @_ ) );
+
 	$holiday =~ m/ \A [0-9]+ \z /smx
 	    and return $holiday;
 	return $lookup->{$holiday} || 0;
@@ -415,15 +433,21 @@ sub _fmt_on_date {
 	'2Yu', '1Li', 'Myd', 'Oli', '2Li', '1Yu',
     );
 
+    my $validate = _make_validator( qw{ UInt } );
+
     sub __holiday_short {
-	my ( $holiday ) = @_;
+	my ( $holiday ) = $validate->( @_ );
 	return $name[ $holiday || 0 ];
     }
 }
 
-sub __is_leap_year {
-    my ( $year ) = @_;
-    return $year % 4 ? 0 : $year % 100 ? 1 : $year % 400 ? 0 : 1;
+{
+    my $validate = _make_validator( qw{ UInt } );
+
+    sub __is_leap_year {
+	my ( $year ) = $validate->( @_ );
+	return $year % 4 ? 0 : $year % 100 ? 1 : $year % 400 ? 0 : 1;
+    }
 }
 
 {
@@ -433,9 +457,11 @@ sub __is_leap_year {
 	'Blotmath', 'Foreyule',
     );
 
+    my $validate_name = _make_validator( qw{ UInt } );
+
     sub __month_name {
-	my ( $month ) = @_;
-	return $name[ $month || 0 ];
+	my ( $month ) = $validate_name->( @_ );
+	return $name[ $month ];
     }
 
     my $lookup = _make_lookup_hash( @name, qw{ ayule flithe alithe fyule
@@ -445,8 +471,12 @@ sub __is_leap_year {
 	$_ = $map[$_];
     }
 
+    my $validate_name_to_num = _make_validator( qw{ Scalar } );
+
     sub __month_name_to_number {
-	my ( $month ) = _normalize_for_lookup( @_ );
+	my ( $month ) = _normalize_for_lookup(
+	    $validate_name_to_num->( @_ ) );
+
 	$month =~ m/ \A [0-9]+ \z /smx
 	    and return $month;
 	return $lookup->{$month} || 0;
@@ -457,8 +487,10 @@ sub __is_leap_year {
     my @name = ( '', 'Ayu', 'Sol', 'Ret', 'Ast', 'Thr', 'Fli', 'Ali',
 	'Wed', 'Hal', 'Win', 'Blo', 'Fyu' );
 
+    my $validate = _make_validator( qw{ UInt } );
+
     sub __month_short {
-	my ( $month ) = @_;
+	my ( $month ) = $validate->( @_ );
 	return $name[ $month || 0 ];
     }
 }
@@ -607,9 +639,10 @@ sub __is_leap_year {
 
     $on_date[12][25] = "The Company of the Ring leaves Rivendell at dusk, 1418.\n";
 
+    my $validate = _make_validator( qw{ UInt UInt|Undef } );
 
     sub __on_date {
-	my ( $month, $day ) = @_;
+	my ( $month, $day ) = $validate->( @_ );
 	defined $day
 	    or ( $month, $day ) = ( 0, $month );
 	return $on_date[$month][$day];
@@ -618,7 +651,7 @@ sub __is_leap_year {
     my @on_date_accented;
 
     sub __on_date_accented {
-	my ( $month, $day ) = @_;
+	my ( $month, $day ) = $validate->( @_ );
 	defined $day
 	    or ( $month, $day ) = ( 0, $month );
 
@@ -659,47 +692,59 @@ sub __is_leap_year {
 {
     my @holiday_quarter = ( undef, 1, 2, 0, 0, 3, 4 );
 
+    my $validate = _make_validator( qw{ UInt UInt|Undef } );
+
     sub __quarter {
-	my ( $month, $day ) = @_;
+	my ( $month, $day ) = $validate->( @_ );
+	defined $day
+	    or ( $month, $day ) = ( 0, $month );
 	return $month ?
 	    POSIX::floor( ( $month - 1 ) / 3 ) + 1 :
 	    $holiday_quarter[$day];
     }
 }
 
-sub __rata_die_to_year_day {
-    my ( $rata_die ) = @_;
+{
+    my $validate = _make_validator( qw{ Int } );
 
-    --$rata_die;	# The algorithm is simpler with zero-based days.
-    my $cycle = POSIX::floor( $rata_die / 146097 );
-    my $day_of_cycle = $rata_die - $cycle * 146097;
-    my $year = POSIX::floor( ( $day_of_cycle -
-	    POSIX::floor( $day_of_cycle / 1460 ) +
-	    POSIX::floor( $day_of_cycle / 36524 ) -
-	    POSIX::floor( $day_of_cycle / 146096 ) ) / 365 ) +
-	    400 * $cycle + 1;
-    # We pay here for the zero-based day by having to add back 2 rather
-    # than 1.
-    my $year_day = $rata_die - __year_day_to_rata_die( $year ) + 2;
-    return ( $year, $year_day );
+    sub __rata_die_to_year_day {
+	my ( $rata_die ) = $validate->( @_ );
+
+	--$rata_die;	# The algorithm is simpler with zero-based days.
+	my $cycle = POSIX::floor( $rata_die / 146097 );
+	my $day_of_cycle = $rata_die - $cycle * 146097;
+	my $year = POSIX::floor( ( $day_of_cycle -
+		POSIX::floor( $day_of_cycle / 1460 ) +
+		POSIX::floor( $day_of_cycle / 36524 ) -
+		POSIX::floor( $day_of_cycle / 146096 ) ) / 365 ) +
+		400 * $cycle + 1;
+	# We pay here for the zero-based day by having to add back 2
+	# rather than 1.
+	my $year_day = $rata_die - __year_day_to_rata_die( $year ) + 2;
+	return ( $year, $year_day );
+    }
 }
 
 {
     my @name = ( '', 'Sterrendei', 'Sunnendei', 'Monendei',
 	'Trewesdei', 'Hevenesdei', 'Meresdei', 'Highdei' );
 
+    my $validate = _make_validator( qw{ UInt } );
+
     sub __trad_weekday_name {
-	my ( $weekday ) = @_;
-	return $name[ $weekday || 0 ];
+	my ( $weekday ) = $validate->( @_ );
+	return $name[ $weekday ];
     }
 }
 
 {
     my @name = ( '', 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
 
+    my $validate = _make_validator( qw{ UInt } );
+
     sub __trad_weekday_short {
-	my ( $weekday ) = @_;
-	return $name[ $weekday || 0 ];
+	my ( $weekday ) = $validate->( @_ );
+	return $name[ $weekday ];
     }
 }
 
@@ -707,8 +752,10 @@ sub __rata_die_to_year_day {
     my @holiday = ( undef, 1, 26, 0, 0, 27, 52 );
     my @month_offset = ( undef, ( 0 ) x 6, ( 2 ) x 6 );
 
+    my $validate = _make_validator( qw{ UInt UInt } );
+
     sub __week_of_year {
-	my ( $month, $day ) = @_;
+	my ( $month, $day ) = $validate->( @_ );
 	$month
 	    or return $holiday[$day];
 	return int( (
@@ -721,28 +768,36 @@ sub __rata_die_to_year_day {
     my @name = ( '', 'Sterday', 'Sunday', 'Monday', 'Trewsday',
 	'Hevensday', 'Mersday', 'Highday' );
 
+    my $validate = _make_validator( qw{ UInt } );
+
     sub __weekday_name {
-	my ( $weekday ) = @_;
-	return $name[ $weekday || 0 ];
+	my ( $weekday ) = $validate->( @_ );
+	return $name[ $weekday ];
     }
 }
 
 {
     my @name = ( '', 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
 
+    my $validate = _make_validator( qw{ UInt } );
+
     sub __weekday_short {
-	my ( $weekday ) = @_;
-	return $name[ $weekday || 0 ];
+	my ( $weekday ) = $validate->( @_ );
+	return $name[ $weekday ];
     }
 }
 
-sub __year_day_to_rata_die {
-    my ( $year, $day ) = @_;
-    --$year;
-    $day ||= 1;
-    return $year * 365 + POSIX::floor( $year / 4 ) -
-	POSIX::floor( $year / 100 ) + POSIX::floor( $year / 400 ) +
-	$day;
+{
+    my $validate = _make_validator( qw{ UInt UInt|Undef } );
+
+    sub __year_day_to_rata_die {
+	my ( $year, $day ) = $validate->( @_ );
+	--$year;
+	$day ||= 1;
+	return $year * 365 + POSIX::floor( $year / 4 ) -
+	    POSIX::floor( $year / 100 ) + POSIX::floor( $year / 400 ) +
+	    $day;
+    }
 }
 
 sub _normalize_for_lookup {
@@ -765,6 +820,89 @@ sub _make_lookup_hash {
 	$_ = $index{$_};
     }
     return wantarray ? %hash : \%hash;
+}
+
+# I want this module to be light weight, but I also want to limit the
+# arguments so I can add or change them with confidence that I don't
+# break anything. So this is poor man's validation.
+{
+    my %type_def;
+
+    BEGIN {
+	# Type definitions expect the value begin validated to be in $_.
+	# They return false if the value passes the validation, and a
+	# brief description of what was expected (which must be a true
+	# value as far as Perl is concerned) if the value fails
+	# validation. They must not throw exceptions, because an
+	# individual validator may be part of an alternation.
+	#
+	# We need the BEGIN block because we are manufacturing
+	# validators in-line, above, and %type_def needs to be populated
+	# before that happens.
+	%type_def = (
+	    # A hash reference
+	    Hash	=> sub { HASH_REF eq ref $_ ? 0 : 'a HASH reference' },
+	    # An integer, optionally signed
+	    Int	=> sub {
+		( defined $_ && m/ \A [-+]? [0-9]+ \z /smx ) ? 0 :
+		'an integer';
+	    },
+	    # An object (i.e. a blessed reference). I am not using
+	    # Scalar::Util::blessed() here because of the desire to run
+	    # under versions of Perl before this was released to core.
+	    Object	=> sub {
+		local $@ = undef;
+		( ref $_ && eval { $_->can( 'isa' ) } ) ? ## no critic (RequireCheckingReturnValueOfEval)
+		0 : 'an object' },
+	    # A defined scalar (i.e. not a reference)
+	    Scalar	=> sub { ( defined $_ && ! ref $_ ) ? 0 :
+		'a non-reference' },
+	    # An unsigned integer
+	    UInt	=> sub {
+		( defined $_ && m/ \A [0-9]+ \z /smx ) ? 0 :
+		'an unsugned integer';
+	    },
+	    # Undefined. Necessary because all the other types reject an
+	    # undefined value.
+	    Undef	=> sub { defined $_ ? 'undefined' : 0 },
+	);
+    }
+
+    # Take as arguments the type specifications of all arguments of the
+    # subroutine to be validated, and return a reference to code that
+    # checks its arguments against those specs. Type specifications must
+    # appear in the above table, or be an alternation of items in the
+    # above table (i.e. joined by '|', e.g. 'Scalar|Undef').
+    #
+    # There is currently no way to do slurpy arguments.
+    sub _make_validator {
+	my ( @spec ) = @_;
+	foreach my $inx ( 0 .. $#spec ) {
+	    foreach my $type ( split qr{ [|] }smx, $spec[$inx] ) {
+		$type_def{$type}
+		    or Carp::confess(
+		    "Programming error - Argument $inx type '$spec[$inx]' is unknown" );
+	    }
+	}
+	return sub {
+	    my @args = @_;
+	    @args > @spec
+		and Carp::croak( 'Too many arguments' );
+	ARGUMENT_LOOP:
+	    foreach my $inx ( 0 .. $#spec ) {
+		my @fail;
+		local $_ = $args[$inx];
+		foreach my $type ( split qr{ [|] }smx, $spec[$inx] ) {
+		    my $error = $type_def{$type}->()
+			or next ARGUMENT_LOOP;
+		    push @fail, $error;
+		}
+		local $" = ' or ';
+		Carp::croak( "Argument $inx ('$_') must be @fail" );
+	    }
+	    return @args;
+	};
+    }
 }
 
 # Create methods for the hash wrapper
@@ -1434,6 +1572,9 @@ date is part of no week (i.e. Midyear's day or the Overlithe), C<0> is
 returned.
 
 =head2 __year_day_to_rata_die
+
+ my $rata_die = __year_day_to_rata_die(
+     $year, $day_of_year );
 
 Given the year and day of the year, this subroutine returns the Rata Die
 day of the given year and day. The day of the year defaults to C<1>.
