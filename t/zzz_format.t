@@ -5,10 +5,12 @@ use 5.006002;
 use strict;
 use warnings;
 
-use Date::Tolkien::Shire::Data qw{ __format __on_date __on_date_accented };
+use Date::Tolkien::Shire::Data qw{
+    __format __locale __on_date __on_date_accented
+};
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 171;
+plan tests => 189;
 
 my $normal = {
     year	=> 1419,
@@ -305,6 +307,60 @@ is( __format( $holiday, '%c' ), 'Hig 1Li 1419 12:00:00 AM',
     q<%c on 1 Lithe 1419> );
 is( __format( $special, '%c' ), 'Myd 1419 01:02:03 AM',
     q<%c on Midyear's day 1419> );
+
+{
+    my $locale = __locale( accented => 1, traditional => 1 );
+
+    is( __format( $normal,  '%A', $locale ), 'Sunnendei',
+	q<Traditional %A on 25 Rethe 1419> );
+    is( __format( $holiday, '%A', $locale ), 'Highdei',
+	q<Traditional %A on 1 Lithe 1419> );
+    is( __format( $special, '%A', $locale ), '',
+	q<Traditional %A on Midyear's day 1419> );
+
+    is( __format( $normal,  '%^A', $locale ), 'SUNNENDEI',
+	q<Traditional %^A on 25 Rethe 1419> );
+    is( __format( $holiday, '%^A', $locale ), 'HIGHDEI',
+	q<Traditional %^A on 1 Lithe 1419> );
+    is( __format( $special, '%^A', $locale ), '',
+	q<Traditional %^A on Midyear's day 1419> );
+
+    is( __format( $normal,  '%a', $locale ), 'Sun',
+	q<Traditional %a on 25 Rethe 1419> );
+    is( __format( $holiday, '%a', $locale ), 'Hig',
+	q<Traditional %a on 1 Lithe 1419> );
+    is( __format( $special, '%a', $locale ), '',
+	q<Traditional %a on Midyear's day 1419> );
+
+    is( __format( $normal,  '%Ed', $locale ), __on_date_accented( 3, 25 ),
+	q<%Ed on 25 Rethe 1419> );
+    is( __format( $holiday, '%Ed', $locale ), __on_date_accented( 0, 2 ) || '',
+	q<%Ed on 1 Lithe 1419> );
+    is( __format( $special, '%Ed', $locale ), __on_date_accented( 0, 3 ),
+	q<%Ed on Midyear's day 1419> );
+
+    is( __format( $normal,  '%En%Ed', $locale ),
+	"\n" . __on_date_accented( 3, 25 ),
+	q<%En%Ed on 25 Rethe 1419> );
+    is( __format( $holiday, '%En%Ed', $locale ), '',
+	q<%En%Ed on 1 Lithe 1419> );
+    is( __format( $special, '%En%Ed', $locale ),
+	"\n" . __on_date_accented( 0, 3 ),
+	q<%En%Ed on Midyear's day 1419> );
+
+    # The purpose of the following three tests is to demonstrate that
+    # %En gets cleared after %Ed
+    is( __format( $normal,  '%En%Ed%Ed', $locale ),
+	"\n" . __on_date_accented( 3, 25 ) .
+	    __on_date_accented( 3, 25 ),
+	q<%En%Ed%Ed on 25 Rethe 1419> );
+    is( __format( $holiday, '%En%Ed%Ed', $locale ), '',
+	q<%En%Ed%Ed on 1 Lithe 1419> );
+    is( __format( $special, '%En%Ed%Ed', $locale ),
+	"\n" . __on_date_accented( 0, 3 ) .
+	    __on_date_accented( 0, 3 ),
+	q<%En%Ed%Ed on Midyear's day 1419> );
+}
 
 1;
 
