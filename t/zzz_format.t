@@ -8,7 +8,7 @@ use warnings;
 use Date::Tolkien::Shire::Data qw{ __format __on_date __on_date_accented };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 186;
+plan tests => 171;
 
 my $normal = {
     year	=> 1419,
@@ -70,43 +70,10 @@ is( __format( $normal,  '%d' ), '25', q<%d on 25 Rethe 1419> );
 is( __format( $holiday, '%d' ), '02', q<%d on 1 Lithe 1419> );
 is( __format( $special, '%d' ), '03', q<%d on Midyear's day 1419> );
 
-is( __format( $normal,  '%EA' ), 'Sunnendei', q<%EA on 25 Rethe 1419> );
-is( __format( $holiday, '%EA' ), 'Highdei', q<%EA on 1 Lithe 1419> );
-is( __format( $special, '%EA' ), '', q<%EA on Midyear's day 1419> );
-
-is( __format( $normal,  '%Ea' ), 'Sun', q<%Ea on 25 Rethe 1419> );
-is( __format( $holiday, '%Ea' ), 'Hig', q<%Ea on 1 Lithe 1419> );
-is( __format( $special, '%Ea' ), '', q<%Ea on Midyear's day 1419> );
-
-# Brought forward because it effects %Ed and %ED
+# Brought forward because it effects %Ed
 is( __format( $normal,  '%En' ), '', q<%En on 25 Rethe 1419> );
 is( __format( $holiday, '%En' ), '', q<%En on 1 Lithe 1419> );
 is( __format( $special, '%En' ), '', q<%En on Midyear's day 1419> );
-
-is( __format( $normal,  '%ED' ), __on_date_accented( 3, 25 ),
-    q<%ED on 25 Rethe 1419> );
-is( __format( $holiday, '%ED' ), __on_date_accented( 0, 2 ) || '',
-    q<%ED on 1 Lithe 1419> );
-is( __format( $special, '%ED' ), __on_date_accented( 0, 3 ),
-    q<%ED on Midyear's day 1419> );
-
-is( __format( $normal,  '%En%ED' ), "\n" . __on_date_accented( 3, 25 ),
-    q<%En%ED on 25 Rethe 1419> );
-is( __format( $holiday, '%En%ED' ), '',
-    q<%En%ED on 1 Lithe 1419> );
-is( __format( $special, '%En%ED' ), "\n" . __on_date_accented( 0, 3 ),
-    q<%En%ED on Midyear's day 1419> );
-
-# The purpose of the following three tests is to demonstrate that %En
-# gets cleared after %ED
-is( __format( $normal,  '%En%ED%ED' ),
-    "\n" . __on_date_accented( 3, 25 ) . __on_date_accented( 3, 25 ),
-    q<%En%ED%ED on 25 Rethe 1419> );
-is( __format( $holiday, '%En%ED%ED' ), '',
-    q<%En%ED%ED on 1 Lithe 1419> );
-is( __format( $special, '%En%ED%ED' ),
-    "\n" . __on_date_accented( 0, 3 ) . __on_date_accented( 0, 3 ),
-    q<%En%ED%ED on Midyear's day 1419> );
 
 is( __format( $normal,  '%Ed' ), __on_date( 3, 25 ),
     q<%Ed on 25 Rethe 1419> );

@@ -212,11 +212,11 @@ sub _fmt_get_md {
 		    $_[2] = $_[0]->day() || $_[0]->holiday();
 		    goto &_fmt_number_02;
 		},
-	EA	=> sub { __trad_weekday_name( $_[0]->day_of_week() ) },
-	Ea	=> sub { __trad_weekday_short( $_[0]->day_of_week() ) },
-	ED	=> sub { $_[1]{on_date_accented} = 1;
-		    goto &_fmt_on_date;
-		},
+##	EA	=> sub { __trad_weekday_name( $_[0]->day_of_week() ) },
+##	Ea	=> sub { __trad_weekday_short( $_[0]->day_of_week() ) },
+##	ED	=> sub { $_[1]{on_date_accented} = 1;
+##		    goto &_fmt_on_date;
+##		},
 	Ed	=> \&_fmt_on_date,
 	EE	=> sub { __holiday_name( $_[0]->holiday() || 0 ) },
 	Ee	=> sub { __holiday_short( $_[0]->holiday() || 0 ) },
@@ -299,7 +299,7 @@ sub _fmt_get_md {
     );
 
     my %case_change = map { $_ => sub { uc $_[0] } }
-	qw{ A a B b EA Ea EE Ee h };
+	qw{ A a B b EE Ee h };
     $case_change{p} = $case_change{Z} = sub { lc $_[0] };
 
     # Note that if I should choose to implement field widths, the width,
@@ -1111,23 +1111,6 @@ The day of the month as a decimal number, zero-filled (range C<01> to
 C<30>). On holidays it is the holiday number, zero-filled (range C<01>
 to C<06>).
 
-=item %EA
-
-The full traditional weekday name, or C<''> for holidays that are part
-of no week.
-
-=item %Ea
-
-The abbreviated traditional weekday name, or C<''> for holidays that are
-part of no week.
-
-=item %ED
-
-The L<__on_date_accented()|/__on_date_accented> text for the given date.
-
-You can get a leading C<"\n"> if there was an actual event using
-C<'%En%ED'>.
-
 =item %Ed
 
 The L<__on_date()|/__on_date> text for the given date.
@@ -1146,9 +1129,8 @@ The abbreviated holiday name, or C<''> for non-holidays.
 
 =item %En
 
-Inserts nothing, but causes the next C<%Ed> or C<%ED> (and B<only> the
-next one) to have a C<"\n"> prefixed if there was an actual event on the
-date.
+Inserts nothing, but causes the next C<%Ed> (and B<only> the next one)
+to have a C<"\n"> prefixed if there was an actual event on the date.
 
 =item %Ex
 
@@ -1389,9 +1371,8 @@ If applied to C<'%p'> or C<'%Z'>, this flag converts the output to lower
 case. It also overrides the C<'^'> flag if both are specified,
 regardless of order.
 
-If applied to C<'%A'>, C<'%a'>, C<'%B'>, C<'%b'> C<'%EA'>, C<'%Ea'>
-C<'%EE'>, C<'%Ee'>, or C<'%h'>, this flag converts the output to lower
-case.
+If applied to C<'%A'>, C<'%a'>, C<'%B'>, C<'%b'>, C<'%EE'>, C<'%Ee'>, or
+C<'%h'>, this flag converts the output to upper case.
 
 If applied to anything else, this flag has no effect.
 
