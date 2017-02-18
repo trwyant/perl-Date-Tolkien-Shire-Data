@@ -660,15 +660,16 @@ sub _fmt_on_date {
 	    # This would be much easier with 'use utf8;', but
 	    # unfortunately this was broken under Perl 5.6.
 	    my $E_acute	= "\N{LATIN CAPITAL LETTER E WITH ACUTE}";
-	    my $e_acute	= "\N{LATIN CAPITAL LETTER E WITH ACUTE}";
-	    my $o_acute	= "\N{LATIN CAPITAL LETTER O WITH ACUTE}";
-	    my $u_acute	= "\N{LATIN CAPITAL LETTER U WITH ACUTE}";
+	    my $e_acute	= "\N{LATIN SMALL LETTER E WITH ACUTE}";
+	    my $o_acute	= "\N{LATIN SMALL LETTER O WITH ACUTE}";
+	    my $u_acute	= "\N{LATIN SMALL LETTER U WITH ACUTE}";
 	    my $u_circ	= "\N{LATIN SMALL LETTER U WITH CIRCUMFLEX}";
 
 	    foreach my $month ( @on_date ) {
 		push @on_date_accented, [];
 		foreach my $day ( @{ $month } ) {
 		    if ( $day ) {
+			$day =~ s/ \b Anorien \b /An${o_acute}rien/smxgo;
 			$day =~ s/ \b Annun \b /Ann${u_circ}n/smxgo;
 			$day =~ s/ \b Barad-dur \b /Barad-d${u_circ}r/smxgo;
 			$day =~ s/ \b Dunedain \b /D${u_acute}nedain/smxgo;

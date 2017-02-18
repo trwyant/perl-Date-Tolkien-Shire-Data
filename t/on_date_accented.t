@@ -19,9 +19,9 @@ plan tests => 366;
 # hand-edited to add the accents.
 
 my $E_acute	= "\N{LATIN CAPITAL LETTER E WITH ACUTE}";
-my $e_acute	= "\N{LATIN CAPITAL LETTER E WITH ACUTE}";
-my $o_acute	= "\N{LATIN CAPITAL LETTER O WITH ACUTE}";
-my $u_acute	= "\N{LATIN CAPITAL LETTER U WITH ACUTE}";
+my $e_acute	= "\N{LATIN SMALL LETTER E WITH ACUTE}";
+my $o_acute	= "\N{LATIN SMALL LETTER O WITH ACUTE}";
+my $u_acute	= "\N{LATIN SMALL LETTER U WITH ACUTE}";
 my $u_circ	= "\N{LATIN SMALL LETTER U WITH CIRCUMFLEX}";
 
 my %events;
@@ -80,7 +80,7 @@ $events{3} = { 1  => "Aragorn meets Gandalf the White, and they set out for Edor
 	       10 => "The Dawnless Day, 1419.\n" .
 		   "The Rohirrim are mustered and ride from Harrowdale, 1419.\n" .
 		   "Faramir rescued by Gandalf at the gates of Minas Tirith, 1419.\n" .
-		   "An army from the Morannon takes Cair Andros and passes into Anorien, 1419.\n",
+		   "An army from the Morannon takes Cair Andros and passes into An${o_acute}rien, 1419.\n",
 	       11 => "Gollum visits Shelob, 1419.\n" . 
 		   "Denethor sends Faramir to Osgiliath, 1419.\n" .
 		   "Eastern Rohan is invaded and L${o_acute}rien assaulted, 1419.\n",
