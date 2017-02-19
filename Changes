@@ -1,8 +1,17 @@
+0.000_011	2017-02-18	T. R. Wyant
+    NOT released to CPAN
+
+    Recode the building of name-to-number hashes so that no
+    hand-tweaking is needed.
+
+    __year_day_to_rata_die() now takes negative years.  The validation
+    mistakenly required non-negative years.
+
 0.000_010	2017-02-18	T. R. Wyant
     NOT released to CPAN
 
     Redo __format() in terms of opaque Locale object.
-    
+
     Add __locale() to manufacture this object.
 
     Correct accents in on_date_accented() text.
