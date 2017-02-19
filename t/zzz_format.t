@@ -309,69 +309,67 @@ is( __format( $special, '%c' ), 'Myd 1419 01:02:03 AM',
     q<%c on Midyear's day 1419> );
 
 {
-    my $locale = __locale( accented => 1, traditional => 1 );
+    $normal->{locale} = $holiday->{locale} = $special->{locale} =
+	__locale( accented => 1, traditional => 1 );
 
-    is( __format( $normal,  '%A', $locale ), 'Sunnendei',
+    is( __format( $normal,  '%A' ), 'Sunnendei',
 	q<Traditional %A on 25 Rethe 1419> );
-    is( __format( $holiday, '%A', $locale ), 'Highdei',
+    is( __format( $holiday, '%A' ), 'Highdei',
 	q<Traditional %A on 1 Lithe 1419> );
-    is( __format( $special, '%A', $locale ), '',
+    is( __format( $special, '%A' ), '',
 	q<Traditional %A on Midyear's day 1419> );
 
-    is( __format( $normal,  '%^A', $locale ), 'SUNNENDEI',
+    is( __format( $normal,  '%^A' ), 'SUNNENDEI',
 	q<Traditional %^A on 25 Rethe 1419> );
-    is( __format( $holiday, '%^A', $locale ), 'HIGHDEI',
+    is( __format( $holiday, '%^A' ), 'HIGHDEI',
 	q<Traditional %^A on 1 Lithe 1419> );
-    is( __format( $special, '%^A', $locale ), '',
+    is( __format( $special, '%^A' ), '',
 	q<Traditional %^A on Midyear's day 1419> );
 
-    is( __format( $normal,  '%a', $locale ), 'Sun',
+    is( __format( $normal,  '%a' ), 'Sun',
 	q<Traditional %a on 25 Rethe 1419> );
-    is( __format( $holiday, '%a', $locale ), 'Hig',
+    is( __format( $holiday, '%a' ), 'Hig',
 	q<Traditional %a on 1 Lithe 1419> );
-    is( __format( $special, '%a', $locale ), '',
+    is( __format( $special, '%a' ), '',
 	q<Traditional %a on Midyear's day 1419> );
 
     # These three tests are to try to demonstrate that the locale gets
     # propagated all through the __format() subsystem.
-    is( __format( $normal, '%Ex', $locale ),
-	    'Sunnendei 25 Rethe 1419',
-	    q<Traditional %Ex on 25 Rethe 1419>,
-	);
-    is( __format( $holiday, '%Ex', $locale ),
-	    'Highdei 1 Lithe 1419',
-	    q<Traditional %Ex on 1 Lithe 1419>,
-	);
-    is( __format( $special, '%Ex', $locale ),
-	    q<Midyear's day 1419>,
-	    q<Traditional %Ex on Midyear's day 1419>,
-	);
+    is( __format( $normal, '%Ex' ), 'Sunnendei 25 Rethe 1419',
+	q<Traditional %Ex on 25 Rethe 1419>,
+    );
+    is( __format( $holiday, '%Ex' ), 'Highdei 1 Lithe 1419',
+	q<Traditional %Ex on 1 Lithe 1419>,
+    );
+    is( __format( $special, '%Ex' ), q<Midyear's day 1419>,
+	q<Traditional %Ex on Midyear's day 1419>,
+    );
 
-    is( __format( $normal,  '%Ed', $locale ), __on_date_accented( 3, 25 ),
+    is( __format( $normal,  '%Ed' ), __on_date_accented( 3, 25 ),
 	q<Accented %Ed on 25 Rethe 1419> );
-    is( __format( $holiday, '%Ed', $locale ), __on_date_accented( 0, 2 ) || '',
+    is( __format( $holiday, '%Ed' ), __on_date_accented( 0, 2 ) || '',
 	q<Accented %Ed on 1 Lithe 1419> );
-    is( __format( $special, '%Ed', $locale ), __on_date_accented( 0, 3 ),
+    is( __format( $special, '%Ed' ), __on_date_accented( 0, 3 ),
 	q<Accented %Ed on Midyear's day 1419> );
 
-    is( __format( $normal,  '%En%Ed', $locale ),
+    is( __format( $normal,  '%En%Ed' ),
 	"\n" . __on_date_accented( 3, 25 ),
 	q<Accented %En%Ed on 25 Rethe 1419> );
-    is( __format( $holiday, '%En%Ed', $locale ), '',
+    is( __format( $holiday, '%En%Ed' ), '',
 	q<Accented %En%Ed on 1 Lithe 1419> );
-    is( __format( $special, '%En%Ed', $locale ),
+    is( __format( $special, '%En%Ed' ),
 	"\n" . __on_date_accented( 0, 3 ),
 	q<Accented %En%Ed on Midyear's day 1419> );
 
     # The purpose of the following three tests is to demonstrate that
     # %En gets cleared after %Ed
-    is( __format( $normal,  '%En%Ed%Ed', $locale ),
+    is( __format( $normal,  '%En%Ed%Ed' ),
 	"\n" . __on_date_accented( 3, 25 ) .
 	    __on_date_accented( 3, 25 ),
 	q<Accented %En%Ed%Ed on 25 Rethe 1419> );
-    is( __format( $holiday, '%En%Ed%Ed', $locale ), '',
+    is( __format( $holiday, '%En%Ed%Ed' ), '',
 	q<Accented %En%Ed%Ed on 1 Lithe 1419> );
-    is( __format( $special, '%En%Ed%Ed', $locale ),
+    is( __format( $special, '%En%Ed%Ed' ),
 	"\n" . __on_date_accented( 0, 3 ) .
 	    __on_date_accented( 0, 3 ),
 	q<Accented %En%Ed%Ed on Midyear's day 1419> );

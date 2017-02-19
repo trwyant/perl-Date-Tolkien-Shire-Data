@@ -120,29 +120,14 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 
 {
 
-    my $validate = _make_validator( qw{ Hash|Object Scalar Undef|Hash|Object } );
+    my $validate = _make_validator( qw{ Hash|Object Scalar } );
 
     sub __format {
-	my ( $date, $tplt, $locale ) = $validate->( @_ );
+	my ( $date, $tplt ) = $validate->( @_ );
 
 	$date = _make_date_object( $date );
-	HASH_REF eq ref $locale
-	    and $locale = __locale( %{ $locale } );
-	$locale ||= __locale();
-	foreach my $method ( qw{
-	    holiday_name holiday_short
-	    month_name month_short
-	    on_date
-	    quarter_name quarter_short
-	    weekday_name
-	    weekday_short
-	} ) {
-	    $locale->can( $method )
-		or Carp::croak( 'Invalid locale object' );
-	}
 
 	my $ctx = {
-	    locale				=> $locale,
 	    prefix_new_line_unless_empty	=> 0,
 	};
 
@@ -151,7 +136,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	    | ( [-_0^#]* ) ( [0-9]* ) ( [EO]? . ) # conv spec ($3,$4,$5)
 	) /
 	    $1 ? ( $date->can( $1 ) ? $date->$1() : "%{$1}" ) :
-	    $2 ? _fmt_cond( $date, $2, $locale ) :
+	    $2 ? _fmt_cond( $date, $2 ) :
 	    _fmt_conv( $date, $5, $3, $4, $ctx )
 	/smxeg;
 
@@ -160,7 +145,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 }
 
 sub _fmt_cond {
-    my ( $date, $tplt, $locale ) = @_;
+    my ( $date, $tplt ) = @_;
     my @cond = split qr< [|]{2} >smx, $tplt;
     foreach my $inx ( 1, 2 ) {
 	defined $cond[$inx]
@@ -176,7 +161,7 @@ sub _fmt_cond {
 	and not __day_of_week( _fmt_get_md( $date ) )
 	and $inx = 2;
 
-    return __format( $date, $cond[$inx], $locale );
+    return __format( $date, $cond[$inx] );
 }
 
 sub _fmt_get_md {
@@ -188,18 +173,16 @@ sub _fmt_get_md {
 
 {
     my %spec = (
-	A	=> sub { $_[1]{locale}->weekday_name( $_[0] ) },
-	a	=> sub { $_[1]{locale}->weekday_short( $_[0] ) },
-	B	=> sub { $_[1]{locale}->month_name( $_[0] ) },
-	b	=> sub { $_[1]{locale}->month_short( $_[0] ) },
+	A	=> sub { $_[0]->locale()->weekday_name( $_[0] ) },
+	a	=> sub { $_[0]->locale()->weekday_short( $_[0] ) },
+	B	=> sub { $_[0]->locale()->month_name( $_[0] ) },
+	b	=> sub { $_[0]->locale()->month_short( $_[0] ) },
 	C	=> sub {
 		    $_[2] = int( $_[0]->year() / 100 );
 		    goto &_fmt_number_02;
 		},
-	c	=> sub { __format(
-		    $_[0], '%{{%a %x||||%x}} %X', $_[1]{locale} ) },
-	D	=> sub { __format(
-		    $_[0], '%{{%m/%d||%Ee}}/%y', $_[1]{locale} ) },
+	c	=> sub { __format( $_[0], '%{{%a %x||||%x}} %X' ) },
+	D	=> sub { __format( $_[0], '%{{%m/%d||%Ee}}/%y' ) },
 	d	=> sub {
 		    $_[2] = $_[0]->day() || $_[0]->holiday();
 		    goto &_fmt_number_02;
@@ -210,18 +193,16 @@ sub _fmt_get_md {
 ##		    goto &_fmt_on_date;
 ##		},
 	Ed	=> \&_fmt_on_date,
-	EE	=> sub { $_[1]{locale}->holiday_name( $_[0] ) },
-	Ee	=> sub { $_[1]{locale}->holiday_short( $_[0] ) },
+	EE	=> sub { $_[0]->locale()->holiday_name( $_[0] ) },
+	Ee	=> sub { $_[0]->locale()->holiday_short( $_[0] ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
-		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}',
-		    $_[1]{locale} ) },
+		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
 	e	=> sub {
 		    $_[2] = $_[0]->day() || $_[0]->holiday();
 		    goto &_fmt_number__2;
 		},
-	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}',
-		    $_[1]{locale} ) },
+	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}' ) },
 #	G	Same as Y by definition of Shire calendar
 	H	=> sub { $_[2] = $_[0]->hour(); goto &_fmt_number_02 },
 #	h	Same as b by definition of strftime()
@@ -250,13 +231,13 @@ sub _fmt_get_md {
 		    goto &_fmt_number;
 		},
 	n	=> sub { "\n" },
-	P	=> sub { lc $_[1]{locale}->am_or_pm( $_[0] ) },
-	p	=> sub { uc $_[1]{locale}->am_or_pm( $_[0] ) },
-	R	=> sub { __format( $_[0], '%H:%M', $_[1]{locale} ) },
-	r	=> sub { __format( $_[0], '%I:%M:%S %p', $_[1]{locale} ) },
+	P	=> sub { lc $_[0]->locale()->am_or_pm( $_[0] ) },
+	p	=> sub { uc $_[0]->locale()->am_or_pm( $_[0] ) },
+	R	=> sub { __format( $_[0], '%H:%M' ) },
+	r	=> sub { __format( $_[0], '%I:%M:%S %p' ) },
 	S	=> sub { $_[2] = $_[0]->second(); goto &_fmt_number_02; },
 	s	=> sub { $_[0]->epoch() },
-	T	=> sub { __format( $_[0], '%H:%M:%S', $_[1]{locale} ) },
+	T	=> sub { __format( $_[0], '%H:%M:%S' ) },
 	t	=> sub { "\t" },
 	U	=> sub {
 		    $_[2] = __week_of_year( _fmt_get_md( $_[0] ) );
@@ -264,12 +245,10 @@ sub _fmt_get_md {
 		},
 	u	=> sub { $_[0]->day_of_week() },
 #	V	Same as U by definition of Shire calendar
-	v	=> sub { __format( $_[0],
-		    '%{{%e-%b-%Y||%Ee-%Y}}', $_[1]{locale} ) },
+	v	=> sub { __format( $_[0], '%{{%e-%b-%Y||%Ee-%Y}}' ) },
 #	W	Same as U by definition of Shire calendar
 #	X	Same as r, I think
-	x	=> sub { __format( $_[0],
-		    '%{{%e %b %Y||%Ee %Y}}', $_[1]{locale} ) }, 
+	x	=> sub { __format( $_[0], '%{{%e %b %Y||%Ee %Y}}' ) }, 
 	Y	=> sub { $_[0]->year() },
 	y	=> sub { $_[2] = $_[0]->year() % 100; goto &_fmt_number_02 },
 	Z	=> sub { $_[0]->time_zone_short_name() },
@@ -383,7 +362,7 @@ sub _fmt_on_date {
     my ( $date, $ctx ) = @_;
     my $pfx = "\n" x $ctx->{prefix_new_line_unless_empty};
     $ctx->{prefix_new_line_unless_empty} = 0;
-    defined( my $on_date = $ctx->{locale}->on_date( $date ) )
+    defined( my $on_date = $date->locale()->on_date( $date ) )
 	or return undef;	## no critic (ProhibitExplicitReturnUndef)
     return "$pfx$on_date";
 }
@@ -456,12 +435,27 @@ sub _fmt_on_date {
     my %valid = map { $_ => 1 } qw{ accented traditional };
 
     sub __locale {
-	my %arg = @_;
-	foreach ( keys %arg ) {
+	my @arg = @_;
+	if ( 1 == @arg ) {
+	    defined $arg[0]
+		or return __locale();
+	    HASH_REF eq ref $arg[0]
+		and return __locale( %{ $arg[0] } );
+	    local $@ = undef;
+	    eval {
+		ref $arg[0]
+		&& $arg[0]->isa( 'Date::Tolkien::Shire::Data::Locale' )
+	    } and return $arg[0];
+	}
+	@arg % 2
+	    and Carp::croak(
+	    'Argument must be a HASH ref, or name/value pairs' );
+	my %hash = @arg;
+	foreach ( keys %hash ) {
 	    $valid{$_}
 		or Carp::croak( "Invalid argument '$_'" );
 	}
-	return $class->_new( %arg );
+	return $class->_new( @arg );
     }
 }
 
@@ -861,6 +855,7 @@ sub _make_date_object {
 		or $hash{holiday} = $hash{day};
 	    $hash{month} = $hash{day} = 0;
 	}
+	$hash{locale} ||= __locale( $hash{locale} );
 	$date = bless \%hash, join '::', __PACKAGE__, 'Date';
     }
 
@@ -1022,6 +1017,9 @@ sub _normalize_for_lookup {
 		$_[0]->day() || $_[0]->holiday(),
 	    );
 	},
+	locale		=> sub {
+	    return ( $_[0]{locale} ||= __locale() );
+	},
 	quarter		=> sub {
 	    return __quarter(
 		$_[0]->month(),
@@ -1032,8 +1030,8 @@ sub _normalize_for_lookup {
 
     foreach my $method ( qw{
 	year month day holiday hour minute second nanosecond
-	epoch offset time_zone_short_name day_of_week quarter
-    } ) {
+	epoch offset time_zone_short_name
+    }, keys %calc ) {
 	my $fqn = join '::', __PACKAGE__, 'Date', $method;
 	if ( my $code = $calc{$method} ) {
 	    no strict qw{ refs };
@@ -1227,6 +1225,7 @@ The C<$date> methods (or keys) used are:
   hour
   minute
   second
+  locale
   day_of_week
   nanosecond
   epoch
@@ -1234,7 +1233,9 @@ The C<$date> methods (or keys) used are:
   time_zone_short_name
 
 The first seven are heavily used. The last four are used only by
-C<'%N'>, C<'%s'>, C<'%z'>, and C<'%Z'> respectively.
+C<'%N'>, C<'%s'>, C<'%z'>, and C<'%Z'> respectively. The locale involved
+is an opaque object generated by L<__locale()|/__locale>, or a reference
+to a hash containing the desired arguments to L<__locale()|/__locale>.
 
 If you pass a hash, the canonical day specification is either a
 non-zero C<month> and C<day> and zero C<holiday>, or vice versa. But if
@@ -1242,7 +1243,8 @@ you pass a zero C<month> and C<holiday>, the method will assume that you
 were specifying a holiday and adjust the hash accordingly, though this
 adjustment will not be visible outside C<__format()>. Also, your hash
 need not specify C<day_of_week> since it can be computed from C<month>
-and C<day>, or C<holiday>.
+and C<day>, or C<holiday>. If you do not provide a locale (as either
+object or hash reference), a default locale will be generated.
 
 The following conversion specifications (to use C<strftime()>
 terminology) or patterns (to use L<DateTime|DateTime> terminology) are
