@@ -1,3 +1,22 @@
+0.000_010	2017-02-18	T. R. Wyant
+    NOT released to CPAN
+
+    Redo __format() in terms of opaque Locale object.
+    
+    Add __locale() to manufacture this object.
+
+    Correct accents in on_date_accented() text.
+
+    Remove formats '%EA', '%Ea', and '%ED'.  On thinking about it, these
+    seem to me to be more a locale thing, though how I will get locales
+    into this package is beyond me at the moment.
+
+    Add rudimentary argument validation. The incentive is that I might
+    want to bolt on a locale system to
+    DateTime::Fiction::JRRTolkien::Shire, and that might (or might not)
+    involve adding arguments. So I want to flag extra arguments now, to
+    reserve them for myself later.
+
 0.000_009	2017-02-15	T. R. Wyant
     Ditch special-case __format() code for '%N'.  With the
     implementation of Glibc field widths, this can now just go through
