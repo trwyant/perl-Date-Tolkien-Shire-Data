@@ -385,31 +385,15 @@ sub _fmt_on_date {
 	'1 Yule',
     );
 
-    my $validate_name = _make_validator( qw{ UInt } );
+    my $validate_name = _make_validator( qw{ UInt|Undef } );
 
     sub __holiday_name {
 	my ( $holiday ) = $validate_name->( @_ );
+	defined $holiday
+	    or return [ @name ];
 	return $name[ $holiday || 0 ];
     }
 
-    my $lookup = _make_lookup_hash( @name, 'myd', 'olithe' );
-    my @map = ( 0 .. 6, 3, 4 );
-    foreach ( values %{ $lookup } ) {
-	$_ = $map[$_];
-    }
-    $lookup->{m} = 3;
-    $lookup->{o} = 4;
-
-    my $validate_name_to_num = _make_validator( qw{ Scalar } );
-
-    sub __holiday_name_to_number {
-	my ( $holiday ) = _normalize_for_lookup(
-	    $validate_name_to_num->( @_ ) );
-
-	$holiday =~ m/ \A [0-9]+ \z /smx
-	    and return $holiday;
-	return $lookup->{$holiday} || 0;
-    }
 }
 
 {
@@ -417,11 +401,34 @@ sub _fmt_on_date {
 	'2Yu', '1Li', 'Myd', 'Oli', '2Li', '1Yu',
     );
 
-    my $validate = _make_validator( qw{ UInt } );
+    my $validate = _make_validator( qw{ UInt|Undef } );
 
     sub __holiday_short {
 	my ( $holiday ) = $validate->( @_ );
+	defined $holiday
+	    or return [ @name ];
 	return $name[ $holiday || 0 ];
+    }
+}
+
+{
+    # This code needs to come after both __holiday_name() and
+    # __holiday_short(), because it calls them both and needs the name
+    # arrays to be set up.
+    my $lookup = _make_lookup_hash(
+	__holiday_name(),
+	__holiday_short(),
+    );
+
+    my $validate = _make_validator( qw{ Scalar } );
+
+    sub __holiday_name_to_number {
+	my ( $holiday ) = _normalize_for_lookup(
+	    $validate->( @_ ) );
+
+	$holiday =~ m/ \A [0-9]+ \z /smx
+	    and return $holiday;
+	return $lookup->{$holiday} || 0;
     }
 }
 
@@ -456,41 +463,46 @@ sub _fmt_on_date {
 	'Blotmath', 'Foreyule',
     );
 
-    my $validate_name = _make_validator( qw{ UInt } );
+    my $validate = _make_validator( qw{ UInt|Undef } );
 
     sub __month_name {
-	my ( $month ) = $validate_name->( @_ );
+	my ( $month ) = $validate->( @_ );
+	defined $month
+	    or return [ @name ];
 	return $name[ $month ];
     }
 
-    my $lookup = _make_lookup_hash( @name, qw{ ayule flithe alithe fyule
-	} );
-    my @map = ( 0 .. 12, 1, 6, 7, 12 );
-    foreach ( values %{ $lookup } ) {
-	$_ = $map[$_];
-    }
-
-    my $validate_name_to_num = _make_validator( qw{ Scalar } );
-
-    sub __month_name_to_number {
-	my ( $month ) = _normalize_for_lookup(
-	    $validate_name_to_num->( @_ ) );
-
-	$month =~ m/ \A [0-9]+ \z /smx
-	    and return $month;
-	return $lookup->{$month} || 0;
-    }
 }
 
 {
     my @name = ( '', 'Ayu', 'Sol', 'Ret', 'Ast', 'Thr', 'Fli', 'Ali',
 	'Wed', 'Hal', 'Win', 'Blo', 'Fyu' );
 
-    my $validate = _make_validator( qw{ UInt } );
+    my $validate = _make_validator( qw{ UInt|Undef } );
 
     sub __month_short {
 	my ( $month ) = $validate->( @_ );
+	defined $month
+	    or return [ @name ];
 	return $name[ $month || 0 ];
+    }
+}
+
+{
+    my $lookup = _make_lookup_hash(
+	__month_name(),
+	__month_short(),
+    );
+
+    my $validate = _make_validator( qw{ Scalar } );
+
+    sub __month_name_to_number {
+	my ( $month ) = _normalize_for_lookup(
+	    $validate->( @_ ) );
+
+	$month =~ m/ \A [0-9]+ \z /smx
+	    and return $month;
+	return $lookup->{$month} || 0;
     }
 }
 
@@ -854,18 +866,49 @@ sub _make_date_object {
     return $date;
 }
 
+# The arguments are multiple array references. The hash is set up so
+# that all unique abbreviations of elements 0 return 0, and so on. The
+# respective elements at the same index do not conflict with each other,
+# so that (to take a not-so-random example) if two arrays are passed in,
+# and the respective element 3s are (after normalization) 'midyearsday'
+# and 'myd', and no other entries start with 'm', then key 'm' will
+# exist and return value 3.
 sub _make_lookup_hash {
-    my @data = _normalize_for_lookup( @_ );
-    my %index;
-    for ( my $inx = 0; $inx < @data; $inx++ ) {
-	$index{$data[$inx]} = $inx;
+    my @sources = @_;
+    my %conflict;
+    my %merged;
+    my $source_count;
+    foreach ( @sources ) {
+	my @source = _normalize_for_lookup( @{ $_ } );
+	my %value;
+	foreach my $inx ( 0 .. $#source ) {
+	    $value{ $source[$inx] } = $inx;
+	}
+	my %hash = Text::Abbrev::abbrev( @source );
+	delete $hash{''};
+	foreach ( values %hash ) {
+	    $_ = $value{$_};
+	}
+	# Would use keys %merged here, but not sure how performant that
+	# is under older Perls.
+	if ( $source_count++ ) {
+	    foreach my $key ( keys %hash ) {
+		if ( $conflict{$key} ) {
+		    # ignore it
+		} elsif ( $merged{$key} ) {
+		    if ( $merged{$key} != $hash{$key} ) {
+			delete $merged{$key};
+			$conflict{$key} = 1;
+		    }
+		} else {
+		    $merged{$key} = $hash{$key};
+		}
+	    }
+	} else {
+	    %merged = %hash;
+	}
     }
-    my %hash = Text::Abbrev::abbrev( @data );
-    delete $hash{ '' };
-    foreach ( values %hash ) {
-	$_ = $index{$_};
-    }
-    return wantarray ? %hash : \%hash;
+    return wantarray ? %merged : \%merged;
 }
 
 # I want this module to be light weight, but I also want to limit the
@@ -954,7 +997,8 @@ sub _make_lookup_hash {
 sub _normalize_for_lookup {
     my @data = @_;
     foreach ( @data ) {
-	( $_ = lc $_ ) =~ s/ [\s[:punct:]]+ //smxg;
+	defined $_
+	    and ( $_ = lc $_ ) =~ s/ [\s[:punct:]]+ //smxg;
     }
     return @data;
 }
