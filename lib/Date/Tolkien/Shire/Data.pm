@@ -811,7 +811,7 @@ sub _fmt_on_date {
 }
 
 {
-    my $validate = _make_validator( qw{ UInt UInt|Undef } );
+    my $validate = _make_validator( qw{ Int UInt|Undef } );
 
     sub __year_day_to_rata_die {
 	my ( $year, $day ) = $validate->( @_ );

@@ -33,7 +33,7 @@ my $days_tested = $ENV{AUTHOR_TESTING} ?
     TOP_YEAR;
 my $want_rd = 0;
 
-plan tests => $days_tested * 3;
+plan tests => $days_tested * 3 + 1;
 
 foreach my $year ( 1 .. TOP_YEAR ) {
 
@@ -53,6 +53,9 @@ foreach my $year ( 1 .. TOP_YEAR ) {
 	cmp_ok( $da, '==', $day, "Rata Die $rata_die is day $day of $year" );
     }
 }
+
+cmp_ok( __year_day_to_rata_die( -4065, 1 ), '==', -1485076,
+    'Ensure __year_day_to_rata_die() takes negative years' );
 
 1;
 
