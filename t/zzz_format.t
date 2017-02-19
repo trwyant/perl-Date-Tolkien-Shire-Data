@@ -10,7 +10,7 @@ use Date::Tolkien::Shire::Data qw{
 };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 189;
+plan tests => 192;
 
 my $normal = {
     year	=> 1419,
@@ -332,34 +332,49 @@ is( __format( $special, '%c' ), 'Myd 1419 01:02:03 AM',
     is( __format( $special, '%a', $locale ), '',
 	q<Traditional %a on Midyear's day 1419> );
 
+    # These three tests are to try to demonstrate that the locale gets
+    # propagated all through the __format() subsystem.
+    is( __format( $normal, '%Ex', $locale ),
+	    'Sunnendei 25 Rethe 1419',
+	    q<Traditional %Ex on 25 Rethe 1419>,
+	);
+    is( __format( $holiday, '%Ex', $locale ),
+	    'Highdei 1 Lithe 1419',
+	    q<Traditional %Ex on 1 Lithe 1419>,
+	);
+    is( __format( $special, '%Ex', $locale ),
+	    q<Midyear's day 1419>,
+	    q<Traditional %Ex on Midyear's day 1419>,
+	);
+
     is( __format( $normal,  '%Ed', $locale ), __on_date_accented( 3, 25 ),
-	q<%Ed on 25 Rethe 1419> );
+	q<Accented %Ed on 25 Rethe 1419> );
     is( __format( $holiday, '%Ed', $locale ), __on_date_accented( 0, 2 ) || '',
-	q<%Ed on 1 Lithe 1419> );
+	q<Accented %Ed on 1 Lithe 1419> );
     is( __format( $special, '%Ed', $locale ), __on_date_accented( 0, 3 ),
-	q<%Ed on Midyear's day 1419> );
+	q<Accented %Ed on Midyear's day 1419> );
 
     is( __format( $normal,  '%En%Ed', $locale ),
 	"\n" . __on_date_accented( 3, 25 ),
-	q<%En%Ed on 25 Rethe 1419> );
+	q<Accented %En%Ed on 25 Rethe 1419> );
     is( __format( $holiday, '%En%Ed', $locale ), '',
-	q<%En%Ed on 1 Lithe 1419> );
+	q<Accented %En%Ed on 1 Lithe 1419> );
     is( __format( $special, '%En%Ed', $locale ),
 	"\n" . __on_date_accented( 0, 3 ),
-	q<%En%Ed on Midyear's day 1419> );
+	q<Accented %En%Ed on Midyear's day 1419> );
 
     # The purpose of the following three tests is to demonstrate that
     # %En gets cleared after %Ed
     is( __format( $normal,  '%En%Ed%Ed', $locale ),
 	"\n" . __on_date_accented( 3, 25 ) .
 	    __on_date_accented( 3, 25 ),
-	q<%En%Ed%Ed on 25 Rethe 1419> );
+	q<Accented %En%Ed%Ed on 25 Rethe 1419> );
     is( __format( $holiday, '%En%Ed%Ed', $locale ), '',
-	q<%En%Ed%Ed on 1 Lithe 1419> );
+	q<Accented %En%Ed%Ed on 1 Lithe 1419> );
     is( __format( $special, '%En%Ed%Ed', $locale ),
 	"\n" . __on_date_accented( 0, 3 ) .
 	    __on_date_accented( 0, 3 ),
-	q<%En%Ed%Ed on Midyear's day 1419> );
+	q<Accented %En%Ed%Ed on Midyear's day 1419> );
 }
 
 1;

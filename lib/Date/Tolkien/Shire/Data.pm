@@ -120,17 +120,20 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 
 {
 
-    my $validate = _make_validator( qw{ Hash|Object Scalar Undef|Object } );
+    my $validate = _make_validator( qw{ Hash|Object Scalar Undef|Hash|Object } );
 
     sub __format {
 	my ( $date, $tplt, $locale ) = $validate->( @_ );
 
 	$date = _make_date_object( $date );
+	HASH_REF eq ref $locale
+	    and $locale = __locale( %{ $locale } );
 	$locale ||= __locale();
 	foreach my $method ( qw{
 	    holiday_name holiday_short
 	    month_name month_short
 	    on_date
+	    quarter_name quarter_short
 	    weekday_name
 	    weekday_short
 	} ) {
@@ -148,7 +151,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	    | ( [-_0^#]* ) ( [0-9]* ) ( [EO]? . ) # conv spec ($3,$4,$5)
 	) /
 	    $1 ? ( $date->can( $1 ) ? $date->$1() : "%{$1}" ) :
-	    $2 ? _fmt_cond( $date, $2 ) :
+	    $2 ? _fmt_cond( $date, $2, $locale ) :
 	    _fmt_conv( $date, $5, $3, $4, $ctx )
 	/smxeg;
 
@@ -157,7 +160,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 }
 
 sub _fmt_cond {
-    my ( $date, $tplt ) = @_;
+    my ( $date, $tplt, $locale ) = @_;
     my @cond = split qr< [|]{2} >smx, $tplt;
     foreach my $inx ( 1, 2 ) {
 	defined $cond[$inx]
@@ -173,7 +176,7 @@ sub _fmt_cond {
 	and not __day_of_week( _fmt_get_md( $date ) )
 	and $inx = 2;
 
-    return __format( $date, $cond[$inx] );
+    return __format( $date, $cond[$inx], $locale );
 }
 
 sub _fmt_get_md {
@@ -193,8 +196,10 @@ sub _fmt_get_md {
 		    $_[2] = int( $_[0]->year() / 100 );
 		    goto &_fmt_number_02;
 		},
-	c	=> sub { __format( $_[0], '%{{%a %x||||%x}} %X' ) },
-	D	=> sub { __format( $_[0], '%{{%m/%d||%Ee}}/%y' ) },
+	c	=> sub { __format(
+		    $_[0], '%{{%a %x||||%x}} %X', $_[1]{locale} ) },
+	D	=> sub { __format(
+		    $_[0], '%{{%m/%d||%Ee}}/%y', $_[1]{locale} ) },
 	d	=> sub {
 		    $_[2] = $_[0]->day() || $_[0]->holiday();
 		    goto &_fmt_number_02;
@@ -209,12 +214,14 @@ sub _fmt_get_md {
 	Ee	=> sub { $_[1]{locale}->holiday_short( $_[0] ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
-		'%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
+		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}',
+		    $_[1]{locale} ) },
 	e	=> sub {
 		    $_[2] = $_[0]->day() || $_[0]->holiday();
 		    goto &_fmt_number__2;
 		},
-	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}' ) },
+	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}',
+		    $_[1]{locale} ) },
 #	G	Same as Y by definition of Shire calendar
 	H	=> sub { $_[2] = $_[0]->hour(); goto &_fmt_number_02 },
 #	h	Same as b by definition of strftime()
@@ -245,11 +252,11 @@ sub _fmt_get_md {
 	n	=> sub { "\n" },
 	P	=> sub { lc $_[1]{locale}->am_or_pm( $_[0] ) },
 	p	=> sub { uc $_[1]{locale}->am_or_pm( $_[0] ) },
-	R	=> sub { __format( $_[0], '%H:%M' ) },
-	r	=> sub { __format( $_[0], '%I:%M:%S %p' ) },
+	R	=> sub { __format( $_[0], '%H:%M', $_[1]{locale} ) },
+	r	=> sub { __format( $_[0], '%I:%M:%S %p', $_[1]{locale} ) },
 	S	=> sub { $_[2] = $_[0]->second(); goto &_fmt_number_02; },
 	s	=> sub { $_[0]->epoch() },
-	T	=> sub { __format( $_[0], '%H:%M:%S' ) },
+	T	=> sub { __format( $_[0], '%H:%M:%S', $_[1]{locale} ) },
 	t	=> sub { "\t" },
 	U	=> sub {
 		    $_[2] = __week_of_year( _fmt_get_md( $_[0] ) );
@@ -257,10 +264,12 @@ sub _fmt_get_md {
 		},
 	u	=> sub { $_[0]->day_of_week() },
 #	V	Same as U by definition of Shire calendar
-	v	=> sub { __format( $_[0], '%{{%e-%b-%Y||%Ee-%Y}}' ) },
+	v	=> sub { __format( $_[0],
+		    '%{{%e-%b-%Y||%Ee-%Y}}', $_[1]{locale} ) },
 #	W	Same as U by definition of Shire calendar
 #	X	Same as r, I think
-	x	=> sub { __format( $_[0], '%{{%e %b %Y||%Ee %Y}}' ) }, 
+	x	=> sub { __format( $_[0],
+		    '%{{%e %b %Y||%Ee %Y}}', $_[1]{locale} ) }, 
 	Y	=> sub { $_[0]->year() },
 	y	=> sub { $_[2] = $_[0]->year() % 100; goto &_fmt_number_02 },
 	Z	=> sub { $_[0]->time_zone_short_name() },
