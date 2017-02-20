@@ -20,13 +20,13 @@ our @ISA = qw{ Exporter };
 our $VERSION = '0.000_011';
 
 our @EXPORT_OK = qw{
+    __am_or_pm
     __date_to_day_of_year
     __day_of_year_to_date
     __day_of_week
     __format
     __is_leap_year
     __holiday_name __holiday_name_to_number __holiday_short
-    __locale
     __month_name __month_name_to_number __month_short
     __on_date __on_date_accented
     __quarter __quarter_name __quarter_short
@@ -52,6 +52,17 @@ use constant OVERLITHE_DAY_OF_YEAR	=> 184;
 # See the documentation below for where the value came from.
 
 use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
+
+{
+    my @name = qw{ AM PM };
+
+    my $validate = _make_validator( qw{ UInt } );
+
+    sub __am_or_pm {
+	my ( $hour ) = $validate->( @_ );
+	return $name[ $hour < 12 ? 0 : 1 ];
+    }
+}
 
 {
 
@@ -173,10 +184,16 @@ sub _fmt_get_md {
 
 {
     my %spec = (
-	A	=> sub { $_[0]->locale()->weekday_name( $_[0] ) },
-	a	=> sub { $_[0]->locale()->weekday_short( $_[0] ) },
-	B	=> sub { $_[0]->locale()->month_name( $_[0] ) },
-	b	=> sub { $_[0]->locale()->month_short( $_[0] ) },
+	A	=> sub { $_[0]->traditional() ?
+		    __trad_weekday_name( $_[0]->day_of_week() ) :
+		    __weekday_name( $_[0]->day_of_week() );
+		},
+	a	=> sub { $_[0]->traditional() ?
+		    __trad_weekday_short( $_[0]->day_of_week() ) :
+		    __weekday_short( $_[0]->day_of_week() );
+		},
+	B	=> sub { __month_name( $_[0]->month() ) },
+	b	=> sub { __month_short( $_[0]->month() ) },
 	C	=> sub {
 		    $_[2] = int( $_[0]->year() / 100 );
 		    goto &_fmt_number_02;
@@ -187,14 +204,9 @@ sub _fmt_get_md {
 		    $_[2] = $_[0]->day() || $_[0]->holiday();
 		    goto &_fmt_number_02;
 		},
-##	EA	=> sub { __trad_weekday_name( $_[0]->day_of_week() ) },
-##	Ea	=> sub { __trad_weekday_short( $_[0]->day_of_week() ) },
-##	ED	=> sub { $_[1]{on_date_accented} = 1;
-##		    goto &_fmt_on_date;
-##		},
 	Ed	=> \&_fmt_on_date,
-	EE	=> sub { $_[0]->locale()->holiday_name( $_[0] ) },
-	Ee	=> sub { $_[0]->locale()->holiday_short( $_[0] ) },
+	EE	=> sub { __holiday_name( $_[0]->holiday() ) },
+	Ee	=> sub { __holiday_short( $_[0]->holiday() ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
 		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
@@ -231,8 +243,8 @@ sub _fmt_get_md {
 		    goto &_fmt_number;
 		},
 	n	=> sub { "\n" },
-	P	=> sub { lc $_[0]->locale()->am_or_pm( $_[0] ) },
-	p	=> sub { uc $_[0]->locale()->am_or_pm( $_[0] ) },
+	P	=> sub { lc __am_or_pm( $_[0]->hour() ) },
+	p	=> sub { uc __am_or_pm( $_[0]->hour() ) },
 	R	=> sub { __format( $_[0], '%H:%M' ) },
 	r	=> sub { __format( $_[0], '%I:%M:%S %p' ) },
 	S	=> sub { $_[2] = $_[0]->second(); goto &_fmt_number_02; },
@@ -362,7 +374,11 @@ sub _fmt_on_date {
     my ( $date, $ctx ) = @_;
     my $pfx = "\n" x $ctx->{prefix_new_line_unless_empty};
     $ctx->{prefix_new_line_unless_empty} = 0;
-    defined( my $on_date = $date->locale()->on_date( $date ) )
+    my $month = $date->month();
+    my $day = $date->day() || $date->holiday();
+    defined( my $on_date = $date->accented() ?
+	__on_date_accented( $month, $day ) :
+	__on_date( $month, $day ) )
 	or return undef;	## no critic (ProhibitExplicitReturnUndef)
     return "$pfx$on_date";
 }
@@ -426,36 +442,6 @@ sub _fmt_on_date {
     sub __is_leap_year {
 	my ( $year ) = $validate->( @_ );
 	return $year % 4 ? 0 : $year % 100 ? 1 : $year % 400 ? 0 : 1;
-    }
-}
-
-{
-    my $class = join '::', __PACKAGE__, 'Locale';
-
-    my %valid = map { $_ => 1 } qw{ accented traditional };
-
-    sub __locale {
-	my @arg = @_;
-	if ( 1 == @arg ) {
-	    defined $arg[0]
-		or return __locale();
-	    HASH_REF eq ref $arg[0]
-		and return __locale( %{ $arg[0] } );
-	    local $@ = undef;
-	    eval {
-		ref $arg[0]
-		&& $arg[0]->isa( 'Date::Tolkien::Shire::Data::Locale' )
-	    } and return $arg[0];
-	}
-	@arg % 2
-	    and Carp::croak(
-	    'Argument must be a HASH ref, or name/value pairs' );
-	my %hash = @arg;
-	foreach ( keys %hash ) {
-	    $valid{$_}
-		or Carp::croak( "Invalid argument '$_'" );
-	}
-	return $class->_new( @arg );
     }
 }
 
@@ -857,7 +843,7 @@ sub _make_date_object {
 		or $hash{holiday} = ( $hash{day} || 0 );
 	    $hash{month} = $hash{day} = 0;
 	}
-	$hash{locale} ||= __locale( $hash{locale} );
+	$hash{$_} ||= 0 for qw{ hour minute second nanosecond };
 	$date = bless \%hash, DATE_CLASS;
     }
 
@@ -954,7 +940,7 @@ sub _make_lookup_hash {
 	    # An unsigned integer
 	    UInt	=> sub {
 		( defined $_ && m/ \A [0-9]+ \z /smx ) ? 0 :
-		'an unsugned integer';
+		'an unsigned integer';
 	    },
 	    # Undefined. Necessary because all the other types reject an
 	    # undefined value.
@@ -1018,9 +1004,6 @@ sub _normalize_for_lookup {
 		$_[0]->day() || $_[0]->holiday(),
 	    );
 	},
-	locale		=> sub {
-	    return ( $_[0]{locale} ||= __locale() );
-	},
 	quarter		=> sub {
 	    return __quarter(
 		$_[0]->month(),
@@ -1032,6 +1015,7 @@ sub _normalize_for_lookup {
     foreach my $method ( qw{
 	year month day holiday hour minute second nanosecond
 	epoch offset time_zone_short_name
+	accented traditional
     }, keys %calc ) {
 	my $fqn = join '::', __PACKAGE__, 'Date', $method;
 	if ( my $code = $calc{$method} ) {
@@ -1045,76 +1029,6 @@ sub _normalize_for_lookup {
 	    no strict qw{ refs };
 	    *$fqn = sub { $_[0]->{$method} };
 	}
-    }
-}
-
-# Create methods for locale
-
-{
-    sub Date::Tolkien::Shire::Data::Locale::_new {
-	my ( $class, %arg ) = @_;
-	return bless \%arg, $class;
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::am_or_pm {
-	my ( undef, $date ) = @_;
-	return ( $date->hour() || 0 ) > 11 ? 'PM' : 'AM';
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::holiday_name {
-	my ( undef, $date ) = @_;
-	return __holiday_name( $date->holiday() );
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::holiday_short {
-	my ( undef, $date ) = @_;
-	return __holiday_short( $date->holiday() );
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::month_name {
-	my ( undef, $date ) = @_;
-	return __month_name( $date->month() );
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::month_short {
-	my ( undef, $date ) = @_;
-	return __month_short( $date->month() );
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::on_date {
-	my ( $self, $date ) = @_;
-	return $self->{accented} ?
-	    __on_date_accented(
-		$date->month(),
-		$date->day() || $date->holiday(),
-	    ) : __on_date(
-		$date->month(),
-		$date->day() || $date->holiday(),
-	    )
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::quarter_name {
-	my ( undef, $date ) = @_;
-	return __quarter_name( $date->quarter() );
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::quarter_short {
-	my ( undef, $date ) = @_;
-	return __quarter_short( $date->quarter() );
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::weekday_name {
-	my ( $self, $date ) = @_;
-	return $self->{traditional} ?
-	    __trad_weekday_name( $date->day_of_week() ) :
-	    __weekday_name( $date->day_of_week() );
-    }
-
-    sub Date::Tolkien::Shire::Data::Locale::weekday_short {
-	my ( $self, $date ) = @_;
-	return $self->{traditional} ?
-	    __trad_weekday_short( $date->day_of_week() ) :
-	    __weekday_short( $date->day_of_week() );
     }
 }
 
@@ -1178,6 +1092,11 @@ that uses this package.
 All of the following are exportable to your name space, but none are
 exported by default.
 
+=head2 __am_or_pm
+
+This subroutine takes as input an hour of the day in the range 0 to 23
+and returns C<'AM'> if the hour is less than 12, or C<'PM'> otherwise.
+
 =head2 __date_to_day_of_year
 
  say __date_to_day_of_year( 1420, 3, 25 );
@@ -1205,17 +1124,14 @@ between C<1> and C<365>, or C<366> in a leap year.
 
 =head2 __format
 
- say __format( $date, $pattern, $locale );
+ say __format( $date, $pattern );
 
 This method formats a date, in a manner similar to C<strftime()>. The
 C<$date> is either an object that supports the necessary methods, or a
 reference to a hash having the necessary keys (same as the
 methods). The C<$pattern> is a string similar to the conversion
 specification passed to C<POSIX::strftime()>; see below for a fuller
-description. The C<$locale> is optional, and is an opaque object
-manufactured by L<__locale()|/__locale> to control such things as
-whether you get "modern" (as of Shire Year 1420 or so) or traditional
-week day names.
+description.
 
 The C<$date> methods (or keys) used are:
 
@@ -1226,7 +1142,6 @@ The C<$date> methods (or keys) used are:
   hour
   minute
   second
-  locale
   day_of_week
   nanosecond
   epoch
@@ -1234,9 +1149,7 @@ The C<$date> methods (or keys) used are:
   time_zone_short_name
 
 The first seven are heavily used. The last four are used only by
-C<'%N'>, C<'%s'>, C<'%z'>, and C<'%Z'> respectively. The locale involved
-is an opaque object generated by L<__locale()|/__locale>, or a reference
-to a hash containing the desired arguments to L<__locale()|/__locale>.
+C<'%N'>, C<'%s'>, C<'%z'>, and C<'%Z'> respectively.
 
 If you pass a hash, the canonical day specification is either a
 non-zero C<month> and C<day> and zero C<holiday>, or vice versa. But if
@@ -1244,8 +1157,7 @@ you pass a zero C<month> and C<holiday>, the method will assume that you
 were specifying a holiday and adjust the hash accordingly, though this
 adjustment will not be visible outside C<__format()>. Also, your hash
 need not specify C<day_of_week> since it can be computed from C<month>
-and C<day>, or C<holiday>. If you do not provide a locale (as either
-object or hash reference), a default locale will be generated.
+and C<day>, or C<holiday>.
 
 The following conversion specifications (to use C<strftime()>
 terminology) or patterns (to use L<DateTime|DateTime> terminology) are
@@ -1609,31 +1521,6 @@ returned.
 
 Given a year number, this subroutine returns C<1> if it is a leap year
 and C<0> if it is not.
-
-=head2 __locale
-
- my $locale = __locale( accented => 1 );
-
-This subroutine manufactures a locale. Possible arguments are:
-
-=over
-
-=item accented
-
-If this Boolean argument is true, the locale produces accented
-C<on_date()> text.
-
-=item traditional
-
-If this Boolean argument is true, the locale produces weekdays with the
-traditional names.
-
-=back
-
-The locale object produced by this subroutine has nothing to do with
-L<DateTime::Locale|DateTime::Locale>. It should be considered an opaque
-object that provides support for modifying the behavior of
-L<__format()|/__format>.
 
 =head2 __month_name
 

@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use Date::Tolkien::Shire::Data qw{
-    __format __locale __on_date __on_date_accented
+    __format __on_date __on_date_accented
 };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
@@ -309,8 +309,9 @@ is( __format( $special, '%c' ), 'Myd 1419 01:02:03 AM',
     q<%c on Midyear's day 1419> );
 
 {
-    $normal->{locale} = $holiday->{locale} = $special->{locale} =
-	__locale( accented => 1, traditional => 1 );
+    $normal->{accented} = $holiday->{accented} = $special->{accented} = 1;
+    $normal->{traditional} = $holiday->{traditional} =
+	$special->{traditional} = 1;
 
     is( __format( $normal,  '%A' ), 'Sunnendei',
 	q<Traditional %A on 25 Rethe 1419> );
