@@ -29,6 +29,7 @@ t/weekday_name.t
 t/weekday_short.t
 t/year_day_to_rata_die.t
 t/zzz_format.t
+tools/valid-date-class
 xt/author/changes.t
 xt/author/critic.t
 xt/author/executable.t
