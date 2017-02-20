@@ -839,31 +839,32 @@ sub _fmt_on_date {
 }
 
 use constant FORMAT_DATE_ERROR => 'Date must be object or hash';
+use constant DATE_CLASS => join '::', __PACKAGE__, 'Date';
 
 sub _make_date_object {
     my ( $date ) = @_;
 
-	my $ref = ref $date
-	    or Carp::croak( FORMAT_DATE_ERROR );
+    my $ref = ref $date
+	or Carp::croak( FORMAT_DATE_ERROR );
 
     if ( HASH_REF eq $ref ) {
 	my %hash = %{ $date };
 	if ( $hash{month} ) {
 	    $hash{holiday} = 0;
+	    $hash{day} ||= 1;
 	} else {
-	    $hash{holiday}
-		or $hash{holiday} = $hash{day};
+	    defined $hash{holiday}
+		or $hash{holiday} = ( $hash{day} || 0 );
 	    $hash{month} = $hash{day} = 0;
 	}
 	$hash{locale} ||= __locale( $hash{locale} );
-	$date = bless \%hash, join '::', __PACKAGE__, 'Date';
+	$date = bless \%hash, DATE_CLASS;
     }
 
     {
 	local $@ = undef;
 	eval {
-	    $date->can( 'isa' );
-	    1;
+	    $date->isa( DATE_CLASS )
 	} or Carp::croak( FORMAT_DATE_ERROR );
     }
 
