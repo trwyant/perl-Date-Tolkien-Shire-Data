@@ -1,3 +1,17 @@
+0.000_012	2017-02-20	T. R. Wyant
+    NOT released to CPAN
+
+    Modify methods expected by __format in date object. Instead of
+    year(), month(), day(), holiday(), and weekday() (or day_of_week()),
+    it is year_number(), etcetera. The motiviation was the equivocation
+    between Date::Tolkien::Shire and
+    DateTime::Fiction::JRRTolkien::Shire on some of these.
+
+    Ditch the locale code as a bad idea.  Instead, go with accented()
+    and traditional() methods on the date object used by __format().
+
+    Fix minor bug in holiday handling in __format().
+
 0.000_011	2017-02-18	T. R. Wyant
     NOT released to CPAN
 
