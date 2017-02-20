@@ -13,32 +13,35 @@ use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 plan tests => 192;
 
 my $normal = {
-    year	=> 1419,
-    month	=> 3,
-    day		=> 25,
+    year_number		=> 1419,
+    month_number	=> 3,
+    day_number		=> 25,
 };
 my $holiday	= {
-    year	=> 1419,
-#   month	=> 0,
-#   day		=> 2,
-    holiday	=> 2,
+    year_number		=> 1419,
+#   month_number	=> 0,
+#   day_number		=> 2,
+    holiday_number	=> 2,
 };
 my $special	= {
-    year	=> 1419,
-#   month	=> 0,
-#   day		=> 3,
-    holiday	=> 3,
-    hour	=> 1,
-    minute	=> 2,
-    second	=> 3,
-    epoch	=> 1234,
-    offset	=> 0,
+    year_number		=> 1419,
+#   month_number	=> 0,
+#   day_number		=> 3,
+    holiday_number	=> 3,
+    hour		=> 1,
+    minute		=> 2,
+    second		=> 3,
+    epoch		=> 1234,
+    offset		=> 0,
     time_zone_short_name	=> 'UTC',
 };
 
-is( __format( $normal,  '%{year}' ), '1419', q<%{year} on 25 Rethe 1419> );
-is( __format( $holiday, '%{year}' ), '1419', q<%{year} on 1 Lithe 1419> );
-is( __format( $special, '%{year}' ), '1419', q<%{year} on Midyear's day 1419> );
+is( __format( $normal,  '%{year_number}' ), '1419',
+    q<%{year_number} on 25 Rethe 1419> );
+is( __format( $holiday, '%{year_number}' ), '1419',
+    q<%{year_number} on 1 Lithe 1419> );
+is( __format( $special, '%{year_number}' ), '1419',
+    q<%{year_number} on Midyear_number's day 1419> );
 
 is( __format( $normal,  '%A' ), 'Sunday', q<%A on 25 Rethe 1419> );
 is( __format( $holiday, '%A' ), 'Highday', q<%A on 1 Lithe 1419> );

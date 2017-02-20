@@ -166,7 +166,7 @@ sub _fmt_cond {
 
     my $inx = 0;
     defined $cond[1]
-	and not $date->month()
+	and not $date->month_number()
 	and $inx = 1;
     defined $cond[2]
 	and not __day_of_week( _fmt_get_md( $date ) )
@@ -177,41 +177,41 @@ sub _fmt_cond {
 
 sub _fmt_get_md {
     my ( $date ) = @_;
-    my $month = $date->month() || 0;
-    my $day = $month ? $date->day() : $date->holiday();
+    my $month = $date->month_number() || 0;
+    my $day = $month ? $date->day_number() : $date->holiday_number();
     return ( $month, $day );
 }
 
 {
     my %spec = (
 	A	=> sub { $_[0]->traditional() ?
-		    __trad_weekday_name( $_[0]->day_of_week() ) :
-		    __weekday_name( $_[0]->day_of_week() );
+		    __trad_weekday_name( $_[0]->weekday_number() ) :
+		    __weekday_name( $_[0]->weekday_number() );
 		},
 	a	=> sub { $_[0]->traditional() ?
-		    __trad_weekday_short( $_[0]->day_of_week() ) :
-		    __weekday_short( $_[0]->day_of_week() );
+		    __trad_weekday_short( $_[0]->weekday_number() ) :
+		    __weekday_short( $_[0]->weekday_number() );
 		},
-	B	=> sub { __month_name( $_[0]->month() ) },
-	b	=> sub { __month_short( $_[0]->month() ) },
+	B	=> sub { __month_name( $_[0]->month_number() ) },
+	b	=> sub { __month_short( $_[0]->month_number() ) },
 	C	=> sub {
-		    $_[2] = int( $_[0]->year() / 100 );
+		    $_[2] = int( $_[0]->year_number() / 100 );
 		    goto &_fmt_number_02;
 		},
 	c	=> sub { __format( $_[0], '%{{%a %x||||%x}} %X' ) },
 	D	=> sub { __format( $_[0], '%{{%m/%d||%Ee}}/%y' ) },
 	d	=> sub {
-		    $_[2] = $_[0]->day() || $_[0]->holiday();
+		    $_[2] = $_[0]->day_number() || $_[0]->holiday_number();
 		    goto &_fmt_number_02;
 		},
 	Ed	=> \&_fmt_on_date,
-	EE	=> sub { __holiday_name( $_[0]->holiday() ) },
-	Ee	=> sub { __holiday_short( $_[0]->holiday() ) },
+	EE	=> sub { __holiday_name( $_[0]->holiday_number() ) },
+	Ee	=> sub { __holiday_short( $_[0]->holiday_number() ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
 		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
 	e	=> sub {
-		    $_[2] = $_[0]->day() || $_[0]->holiday();
+		    $_[2] = $_[0]->day_number() || $_[0]->holiday_number();
 		    goto &_fmt_number__2;
 		},
 	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}' ) },
@@ -226,7 +226,7 @@ sub _fmt_get_md {
 		    defined $_[1]{wid}
 			or $_[1]{wid} = 3;
 		    $_[2] = __date_to_day_of_year(
-			$_[0]->year(), _fmt_get_md( $_[0] ) );
+			$_[0]->year_number(), _fmt_get_md( $_[0] ) );
 		    goto &_fmt_number;
 		},
 	k	=> sub { $_[2] = $_[0]->hour(); goto &_fmt_number__2; },
@@ -235,7 +235,7 @@ sub _fmt_get_md {
 		    goto &_fmt_number__2;
 		},
 	M	=> sub { $_[2] = $_[0]->minute(); goto &_fmt_number_02; },
-	m	=> sub { $_[2] = $_[0]->month(); goto &_fmt_number_02; },
+	m	=> sub { $_[2] = $_[0]->month_number(); goto &_fmt_number_02; },
 	N	=> sub {
 		    defined $_[1]{wid}
 			or $_[1]{wid} = 9;
@@ -255,14 +255,17 @@ sub _fmt_get_md {
 		    $_[2] = __week_of_year( _fmt_get_md( $_[0] ) );
 		    goto &_fmt_number_02;
 		},
-	u	=> sub { $_[0]->day_of_week() },
+	u	=> sub { $_[0]->weekday_number() },
 #	V	Same as U by definition of Shire calendar
 	v	=> sub { __format( $_[0], '%{{%e-%b-%Y||%Ee-%Y}}' ) },
 #	W	Same as U by definition of Shire calendar
 #	X	Same as r, I think
 	x	=> sub { __format( $_[0], '%{{%e %b %Y||%Ee %Y}}' ) }, 
-	Y	=> sub { $_[0]->year() },
-	y	=> sub { $_[2] = $_[0]->year() % 100; goto &_fmt_number_02 },
+	Y	=> sub { $_[0]->year_number() },
+	y	=> sub {
+		    $_[2] = $_[0]->year_number() % 100;
+		    goto &_fmt_number_02;
+		},
 	Z	=> sub { $_[0]->time_zone_short_name() },
 	z	=> sub { _fmt_offset( $_[0]->offset() ) },
 	'%'	=> sub { '%' },
@@ -374,8 +377,8 @@ sub _fmt_on_date {
     my ( $date, $ctx ) = @_;
     my $pfx = "\n" x $ctx->{prefix_new_line_unless_empty};
     $ctx->{prefix_new_line_unless_empty} = 0;
-    my $month = $date->month();
-    my $day = $date->day() || $date->holiday();
+    my $month = $date->month_number();
+    my $day = $date->day_number() || $date->holiday_number();
     defined( my $on_date = $date->accented() ?
 	__on_date_accented( $month, $day ) :
 	__on_date( $month, $day ) )
@@ -834,14 +837,22 @@ sub _make_date_object {
 	or Carp::croak( FORMAT_DATE_ERROR );
 
     if ( HASH_REF eq $ref ) {
+	$date = { %{ $date } };	# Clone
+	foreach my $key ( qw{ year month day holiday } ) {
+	    exists $date->{$key}
+		or next;
+	    # TODO alert here and then strip extra code once we're
+	    # stable on this nomenclature
+	    $date->{ "${key}_number" } = delete $date->{$key};
+	}
 	my %hash = %{ $date };
-	if ( $hash{month} ) {
-	    $hash{holiday} = 0;
+	if ( $hash{month_number} ) {
+	    $hash{holiday_number} = 0;
 	    $hash{day} ||= 1;
 	} else {
-	    defined $hash{holiday}
-		or $hash{holiday} = ( $hash{day} || 0 );
-	    $hash{month} = $hash{day} = 0;
+	    defined $hash{holiday_number}
+		or $hash{holiday_number} = ( $hash{day} || 0 );
+	    $hash{month_number} = $hash{day} = 0;
 	}
 	$hash{$_} ||= 0 for qw{ hour minute second nanosecond };
 	$date = bless \%hash, DATE_CLASS;
@@ -850,7 +861,26 @@ sub _make_date_object {
     {
 	local $@ = undef;
 	eval {
-	    $date->isa( DATE_CLASS )
+	    foreach my $method ( qw{
+		year_number
+		month_number
+		day_number
+		holiday_number
+		hour
+		minute
+		second
+		weekday_number
+		nanosecond
+		epoch
+		offset
+		time_zone_short_name
+		accented
+		traditional
+	    } ) {
+		$date->can( $method )
+		    or return;
+	    }
+	    1;
 	} or Carp::croak( FORMAT_DATE_ERROR );
     }
 
@@ -998,23 +1028,24 @@ sub _normalize_for_lookup {
 
 {
     my %calc = (
-	day_of_week	=> sub {
+	weekday_number	=> sub {
 	    return __day_of_week(
-		$_[0]->month(),
-		$_[0]->day() || $_[0]->holiday(),
+		$_[0]->month_number(),
+		$_[0]->day_number() || $_[0]->holiday_number(),
 	    );
 	},
 	quarter		=> sub {
 	    return __quarter(
-		$_[0]->month(),
-		$_[0]->day() || $_[0]->holiday(),
+		$_[0]->month_number(),
+		$_[0]->day_number() || $_[0]->holiday_number(),
 	    );
 	},
     );
 
     foreach my $method ( qw{
-	year month day holiday hour minute second nanosecond
-	epoch offset time_zone_short_name
+	year_number month_number day_number holiday_number
+	hour minute second nanosecond epoch
+	offset time_zone_short_name
 	accented traditional
     }, keys %calc ) {
 	my $fqn = join '::', __PACKAGE__, 'Date', $method;
@@ -1135,14 +1166,14 @@ description.
 
 The C<$date> methods (or keys) used are:
 
-  year
-  month
-  day
-  holiday
+  year_number
+  month_number
+  day_number
+  holiday_number
   hour
   minute
   second
-  day_of_week
+  weekday_number
   nanosecond
   epoch
   offset
@@ -1151,13 +1182,14 @@ The C<$date> methods (or keys) used are:
 The first seven are heavily used. The last four are used only by
 C<'%N'>, C<'%s'>, C<'%z'>, and C<'%Z'> respectively.
 
-If you pass a hash, the canonical day specification is either a
-non-zero C<month> and C<day> and zero C<holiday>, or vice versa. But if
-you pass a zero C<month> and C<holiday>, the method will assume that you
-were specifying a holiday and adjust the hash accordingly, though this
-adjustment will not be visible outside C<__format()>. Also, your hash
-need not specify C<day_of_week> since it can be computed from C<month>
-and C<day>, or C<holiday>.
+If you pass a hash, the canonical day specification is either a non-zero
+C<month_number> and C<day> and zero C<holiday_number>, or vice versa.
+But if you pass a zero C<month_number> and C<holiday_number>, the method
+will assume that you were specifying a holiday_number and adjust the
+hash accordingly, though this adjustment will not be visible outside
+C<__format()>. Also, your hash need not specify C<weekday_number> since
+it can be computed from C<month_number> and C<day>, or
+C<holiday_number>.
 
 The following conversion specifications (to use C<strftime()>
 terminology) or patterns (to use L<DateTime|DateTime> terminology) are
