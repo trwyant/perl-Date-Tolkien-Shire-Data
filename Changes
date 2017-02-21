@@ -1,3 +1,17 @@
+0.000_013	2017-02-21	T. R. Wyant
+    Rename __*_short() to __*_abbr(). No idea why I thought _short was
+    better.
+
+    Update README and module front matter.
+
+    Expose __valid_date_class() This is the validator for an object
+    passed as a date to __format(). It is exposed for troubleshooting
+    purposes.
+
+    Add tools/valid-date-class.  This is an author's diagnostic to
+    determine whether the perl package being analyzed has the methods it
+    needs to be passed to the __format() subroutine as a date object.
+
 0.000_012	2017-02-20	T. R. Wyant
     NOT released to CPAN
 
