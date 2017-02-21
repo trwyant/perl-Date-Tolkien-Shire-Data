@@ -6,7 +6,7 @@ use strict;
 use warnings;
 
 use Date::Tolkien::Shire::Data qw{
-    __quarter __quarter_name __quarter_short
+    __quarter __quarter_name __quarter_abbr
 };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
@@ -50,7 +50,7 @@ foreach my $spec (
     foreach my $quarter ( 0 .. 4 ) {
 	is( __quarter_name( $quarter ), $name[$quarter],
 	    "Name of quarter $quarter" );
-	is( __quarter_short( $quarter ), $short[$quarter],
+	is( __quarter_abbr( $quarter ), $short[$quarter],
 	    "Abbreviation of quarter $quarter" );
     }
 }

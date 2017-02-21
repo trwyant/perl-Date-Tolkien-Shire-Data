@@ -26,14 +26,14 @@ our @EXPORT_OK = qw{
     __day_of_week
     __format
     __is_leap_year
-    __holiday_name __holiday_name_to_number __holiday_short
-    __month_name __month_name_to_number __month_short
+    __holiday_name __holiday_name_to_number __holiday_abbr
+    __month_name __month_name_to_number __month_abbr
     __on_date __on_date_accented
-    __quarter __quarter_name __quarter_short
+    __quarter __quarter_name __quarter_abbr
     __rata_die_to_year_day
-    __trad_weekday_name __trad_weekday_short
+    __trad_weekday_name __trad_weekday_abbr
     __valid_date_class
-    __weekday_name __weekday_short
+    __weekday_name __weekday_abbr
     __week_of_year
     __year_day_to_rata_die
     GREGORIAN_RATA_DIE_TO_SHIRE
@@ -190,11 +190,11 @@ sub _fmt_get_md {
 		    __weekday_name( $_[0]->weekday_number() );
 		},
 	a	=> sub { $_[0]->traditional() ?
-		    __trad_weekday_short( $_[0]->weekday_number() ) :
-		    __weekday_short( $_[0]->weekday_number() );
+		    __trad_weekday_abbr( $_[0]->weekday_number() ) :
+		    __weekday_abbr( $_[0]->weekday_number() );
 		},
 	B	=> sub { __month_name( $_[0]->month_number() ) },
-	b	=> sub { __month_short( $_[0]->month_number() ) },
+	b	=> sub { __month_abbr( $_[0]->month_number() ) },
 	C	=> sub {
 		    $_[2] = int( $_[0]->year_number() / 100 );
 		    goto &_fmt_number_02;
@@ -207,7 +207,7 @@ sub _fmt_get_md {
 		},
 	Ed	=> \&_fmt_on_date,
 	EE	=> sub { __holiday_name( $_[0]->holiday_number() ) },
-	Ee	=> sub { __holiday_short( $_[0]->holiday_number() ) },
+	Ee	=> sub { __holiday_abbr( $_[0]->holiday_number() ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
 		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
@@ -411,7 +411,7 @@ sub _fmt_on_date {
 
     my $validate = _make_validator( qw{ UInt|Undef } );
 
-    sub __holiday_short {
+    sub __holiday_abbr {
 	my ( $holiday ) = $validate->( @_ );
 	defined $holiday
 	    or return [ @name ];
@@ -421,11 +421,11 @@ sub _fmt_on_date {
 
 {
     # This code needs to come after both __holiday_name() and
-    # __holiday_short(), because it calls them both and needs the name
+    # __holiday_abbr(), because it calls them both and needs the name
     # arrays to be set up.
     my $lookup = _make_lookup_hash(
 	__holiday_name(),
-	__holiday_short(),
+	__holiday_abbr(),
     );
 
     my $validate = _make_validator( qw{ Scalar } );
@@ -473,7 +473,7 @@ sub _fmt_on_date {
 
     my $validate = _make_validator( qw{ UInt|Undef } );
 
-    sub __month_short {
+    sub __month_abbr {
 	my ( $month ) = $validate->( @_ );
 	defined $month
 	    or return [ @name ];
@@ -484,7 +484,7 @@ sub _fmt_on_date {
 {
     my $lookup = _make_lookup_hash(
 	__month_name(),
-	__month_short(),
+	__month_abbr(),
     );
 
     my $validate = _make_validator( qw{ Scalar } );
@@ -726,7 +726,7 @@ sub _fmt_on_date {
 
     my $validate = _make_validator( qw{ UInt } );
 
-    sub __quarter_short {
+    sub __quarter_abbr {
 	my ( $quarter ) = $validate->( @_ );
 	return $name[ $quarter ];
     }
@@ -770,7 +770,7 @@ sub _fmt_on_date {
 
     my $validate = _make_validator( qw{ UInt } );
 
-    sub __trad_weekday_short {
+    sub __trad_weekday_abbr {
 	my ( $weekday ) = $validate->( @_ );
 	return $name[ $weekday ];
     }
@@ -809,7 +809,7 @@ sub _fmt_on_date {
 
     my $validate = _make_validator( qw{ UInt } );
 
-    sub __weekday_short {
+    sub __weekday_abbr {
 	my ( $weekday ) = $validate->( @_ );
 	return $name[ $weekday ];
     }
@@ -1557,9 +1557,9 @@ number of the holiday. Unique abbreviations of names or short names
 digits are returned unmodified. Anything unrecognized causes C<0> to be
 returned.
 
-=head2 __holiday_short
+=head2 __holiday_abbr
 
- say __holiday_short( 3 );
+ say __holiday_abbr( 3 );
 
 Given a holiday number C<(1-6)>, this subroutine returns that holiday's
 three-letter abbreviation. If the holiday number is C<0> (i.e. the day
@@ -1592,9 +1592,9 @@ number of the month. Unique abbreviations of names or short names
 digits are returned unmodified. Anything unrecognized causes C<0> to be
 returned.
 
-=head2 __month_short
+=head2 __month_abbr
 
- say __month_short( 3 );
+ say __month_abbr( 3 );
 
 Given a month number C<(1-12)>, this subroutine returns that month's
 three-letter abbreviation. If the month number is C<0> (i.e. a holiday),
@@ -1646,7 +1646,7 @@ rationalized this way.
 Given the quarter number, return the name of the quarter. If the quarter
 number is C<0> (i.e. Midyear's day or Overlithe), C<''> is returned.
 
-=head2 __quarter_short
+=head2 __quarter_abbr
 
 Given the quarter number, return the abbreviated name of the quarter. If
 the quarter number is C<0> (i.e. Midyear's day or Overlithe), C<''> is
@@ -1682,9 +1682,9 @@ weekday given its number (1-7). If the weekday number is C<0> (i.e.
 Midyear's day or the Overlithe) the empty string is returned. Otherwise,
 C<undef> is returned.
 
-=head2 __trad_weekday_short
+=head2 __trad_weekday_abbr
 
- say 'Day 1 is ', __trad_weekday_short( 1 );
+ say 'Day 1 is ', __trad_weekday_abbr( 1 );
 
 This subroutine computes the three-letter abbreviation of a traditional
 (i.e. old-style) weekday given its number (1-7). If the weekday number
@@ -1718,9 +1718,9 @@ This subroutine computes the name of a weekday given its number (1-7).
 If the weekday number is C<0> (i.e. Midyear's day or the Overlithe) the
 empty string is returned. Otherwise, C<undef> is returned.
 
-=head2 __weekday_short
+=head2 __weekday_abbr
 
- say 'Day 1 is ', __weekday_short( 1 );
+ say 'Day 1 is ', __weekday_abbr( 1 );
 
 This subroutine computes the three-letter abbreviation of a weekday
 given its number (1-7). If the weekday number is C<0> (i.e. Midyear's
