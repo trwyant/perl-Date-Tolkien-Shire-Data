@@ -32,6 +32,7 @@ our @EXPORT_OK = qw{
     __quarter __quarter_name __quarter_short
     __rata_die_to_year_day
     __trad_weekday_name __trad_weekday_short
+    __valid_date_class
     __weekday_name __weekday_short
     __week_of_year
     __year_day_to_rata_die
@@ -859,32 +860,46 @@ sub _make_date_object {
     }
 
     {
-	local $@ = undef;
-	eval {
-	    foreach my $method ( qw{
-		year_number
-		month_number
-		day_number
-		holiday_number
-		hour
-		minute
-		second
-		weekday_number
-		nanosecond
-		epoch
-		offset
-		time_zone_short_name
-		accented
-		traditional
-	    } ) {
-		$date->can( $method )
-		    or return;
-	    }
-	    1;
-	} or Carp::croak( FORMAT_DATE_ERROR );
+	my @missing = __valid_date_class( $date );
+	local $" = ', ';
+	@missing
+	    and Carp::croak(
+	    "A @{[ ref $date ]} is not a valid date object, it lacks: @missing" );
     }
 
     return $date;
+}
+
+sub __valid_date_class {
+    my ( $obj ) = @_;
+    my $package = ref $obj || $obj;
+    unless ( ref $obj ) {
+	( my $fn = $package ) =~ s{ :: }{/}smxg;
+	$fn .= '.pm';
+	$INC{$fn}
+	    or require $fn;
+    }
+    my @missing;
+    foreach my $method ( qw{
+	year_number
+	month_number
+	day_number
+	holiday_number
+	hour
+	minute
+	second
+	weekday_number
+	nanosecond
+	epoch
+	offset
+	time_zone_short_name
+	accented
+	traditional
+    } ) {
+	$package->can( $method )
+	    or push @missing, $method;
+    }
+    return @missing;
 }
 
 # The arguments are multiple array references. The hash is set up so
@@ -1672,6 +1687,24 @@ This subroutine computes the three-letter abbreviation of a traditional
 is C<0> (i.e.  Midyear's day or the Overlithe) the empty string is
 returned. Otherwise, C<undef> is returned.
 
+=head2 __valid_date_class
+
+This subroutine takes as its argument either an object or a class name.
+If a class name, it is loaded if possible, and if it has not already
+been loaded. Then the class is checked to see if it has all the methods
+required of a date object passed to L<__format()|/__format>.
+
+In list context it returns the names of any missing methods. In scalar
+context it returns the number of missing methods. So a return of an
+empty list (or zero in scalar context) means the class can probably be
+passed as a date to L<__format()|/__format()>. The weasel word
+'probably' is because the check is on method name only; we have no idea
+whether the semantics of the methods found are what we would like them
+to be.
+
+This subroutine is exposed for troubleshooting purposes, though it is
+hoped the exception thrown if this check fails will be sufficiently
+explicit. See also F<tools/valid-date-class>.
 
 =head2 __weekday_name
 

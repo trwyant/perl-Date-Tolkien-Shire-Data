@@ -5,6 +5,7 @@ use 5.006002;
 use strict;
 use warnings;
 
+use Date::Tolkien::Shire::Data qw{ __valid_date_class };
 use Getopt::Long 2.25;
 use Pod::Usage;
 
@@ -29,37 +30,10 @@ if ( $opt{blib} ) {
     blib->import();
 }
 
-my @required = qw{
-		year_number
-		month_number
-		day_number
-		holiday_number
-		hour
-		minute
-		second
-		weekday_number
-		nanosecond
-		epoch
-		offset
-		time_zone_short_name
-		accented
-		traditional
-};
-
 my $exit_status = 0;
 
 foreach my $class ( @ARGV ) {
-    {
-	local $@ = undef;
-	eval "require $class; 1"
-	    or die "Unable to load $class\n";
-    }
-    my @missing;
-    foreach my $method ( @required ) {
-	$class->can( $method )
-	    or push @missing, $method;
-
-    }
+    my @missing = __valid_date_class( $class );
 
     local $\ = "\n";
     if ( @missing ) {
