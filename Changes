@@ -1,3 +1,15 @@
+0.000_014	2017-02-26	T. R. Wyant
+    Rethink __format interface again.  What I think now is that, rather
+    than a patchwork of method names from two essentially incombatible
+    interfaces, it should be __fmt_shire_*() for everything. Since
+    almost all uses of the day and holiday methods in __format() were
+    day || holiday, get rid of the holiday method (under any name), and
+    just have __fmt_shire_day, which returns either day or holiday
+    number. This brings this interface into line with the rest of this
+    package. But it's not all sweetness and light, because now the
+    implementations of %Ee and %EE have to explicitly check the month
+    number.
+
 0.000_013	2017-02-21	T. R. Wyant
     Rename __*_short() to __*_abbr(). No idea why I thought _short was
     better.
