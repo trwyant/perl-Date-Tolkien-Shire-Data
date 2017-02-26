@@ -167,108 +167,104 @@ sub _fmt_cond {
 
     my $inx = 0;
     defined $cond[1]
-	and not $date->month_number()
+	and not $date->__fmt_shire_month()
 	and $inx = 1;
     defined $cond[2]
-	and not __day_of_week( _fmt_get_md( $date ) )
+	and not __day_of_week( $date->__fmt_shire_month(), $date->__fmt_shire_day() )
 	and $inx = 2;
 
     return __format( $date, $cond[$inx] );
 }
 
-sub _fmt_get_md {
-    my ( $date ) = @_;
-    my $month = $date->month_number() || 0;
-    my $day = $month ? $date->day_number() : $date->holiday_number();
-    return ( $month, $day );
-}
-
 {
     my %spec = (
-	A	=> sub { $_[0]->traditional() ?
-		    __trad_weekday_name( $_[0]->weekday_number() ) :
-		    __weekday_name( $_[0]->weekday_number() );
+	A	=> sub { $_[0]->__fmt_shire_traditional() ?
+		    __trad_weekday_name( $_[0]->__fmt_shire_day_of_week() ) :
+		    __weekday_name( $_[0]->__fmt_shire_day_of_week() );
 		},
-	a	=> sub { $_[0]->traditional() ?
-		    __trad_weekday_abbr( $_[0]->weekday_number() ) :
-		    __weekday_abbr( $_[0]->weekday_number() );
+	a	=> sub { $_[0]->__fmt_shire_traditional() ?
+		    __trad_weekday_abbr( $_[0]->__fmt_shire_day_of_week() ) :
+		    __weekday_abbr( $_[0]->__fmt_shire_day_of_week() );
 		},
-	B	=> sub { __month_name( $_[0]->month_number() ) },
-	b	=> sub { __month_abbr( $_[0]->month_number() ) },
+	B	=> sub { __month_name( $_[0]->__fmt_shire_month() ) },
+	b	=> sub { __month_abbr( $_[0]->__fmt_shire_month() ) },
 	C	=> sub {
-		    $_[2] = int( $_[0]->year_number() / 100 );
+		    $_[2] = int( $_[0]->__fmt_shire_year() / 100 );
 		    goto &_fmt_number_02;
 		},
 	c	=> sub { __format( $_[0], '%{{%a %x||||%x}} %X' ) },
 	D	=> sub { __format( $_[0], '%{{%m/%d||%Ee}}/%y' ) },
 	d	=> sub {
-		    $_[2] = $_[0]->day_number() || $_[0]->holiday_number();
+		    $_[2] = $_[0]->__fmt_shire_day();
 		    goto &_fmt_number_02;
 		},
 	Ed	=> \&_fmt_on_date,
-	EE	=> sub { __holiday_name( $_[0]->holiday_number() ) },
-	Ee	=> sub { __holiday_abbr( $_[0]->holiday_number() ) },
+	EE	=> sub { __holiday_name( $_[0]->__fmt_shire_month() ? 0 :
+		$_[0]->__fmt_shire_day() ) },
+	Ee	=> sub { __holiday_abbr( $_[0]->__fmt_shire_month() ? 0 :
+		$_[0]->__fmt_shire_day() ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Ex	=> sub { __format( $_[0],
 		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
 	e	=> sub {
-		    $_[2] = $_[0]->day_number() || $_[0]->holiday_number();
+		    $_[2] = $_[0]->__fmt_shire_day();
 		    goto &_fmt_number__2;
 		},
 	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}' ) },
 #	G	Same as Y by definition of Shire calendar
-	H	=> sub { $_[2] = $_[0]->hour(); goto &_fmt_number_02 },
+	H	=> sub { $_[2] = $_[0]->__fmt_shire_hour(); goto &_fmt_number_02 },
 #	h	Same as b by definition of strftime()
 	I	=> sub {
-		    $_[2] = ( $_[0]->hour() || 0 ) % 12 || 12;
+		    $_[2] = ( $_[0]->__fmt_shire_hour() || 0 ) % 12 || 12;
 		    goto &_fmt_number_02;
 		},
 	j	=> sub {
 		    defined $_[1]{wid}
 			or $_[1]{wid} = 3;
-		    $_[2] = __date_to_day_of_year(
-			$_[0]->year_number(), _fmt_get_md( $_[0] ) );
+		    $_[2] = __date_to_day_of_year( $_[0]->__fmt_shire_year(),
+			$_[0]->__fmt_shire_month(), $_[0]->__fmt_shire_day() );
 		    goto &_fmt_number;
 		},
-	k	=> sub { $_[2] = $_[0]->hour(); goto &_fmt_number__2; },
+	k	=> sub { $_[2] = $_[0]->__fmt_shire_hour(); goto &_fmt_number__2; },
 	l	=> sub {
-		    $_[2] = ( $_[0]->hour() || 0 ) % 12 || 12;
+		    $_[2] = ( $_[0]->__fmt_shire_hour() || 0 ) % 12 || 12;
 		    goto &_fmt_number__2;
 		},
-	M	=> sub { $_[2] = $_[0]->minute(); goto &_fmt_number_02; },
-	m	=> sub { $_[2] = $_[0]->month_number(); goto &_fmt_number_02; },
+	M	=> sub { $_[2] = $_[0]->__fmt_shire_minute(); goto &_fmt_number_02; },
+	m	=> sub { $_[2] = $_[0]->__fmt_shire_month(); goto &_fmt_number_02; },
 	N	=> sub {
 		    defined $_[1]{wid}
 			or $_[1]{wid} = 9;
-		    $_[2] = $_[0]->nanosecond();
+		    $_[2] = $_[0]->__fmt_shire_nanosecond();
 		    goto &_fmt_number;
 		},
 	n	=> sub { "\n" },
-	P	=> sub { lc __am_or_pm( $_[0]->hour() ) },
-	p	=> sub { uc __am_or_pm( $_[0]->hour() ) },
+	P	=> sub { lc __am_or_pm( $_[0]->__fmt_shire_hour() ) },
+	p	=> sub { uc __am_or_pm( $_[0]->__fmt_shire_hour() ) },
 	R	=> sub { __format( $_[0], '%H:%M' ) },
 	r	=> sub { __format( $_[0], '%I:%M:%S %p' ) },
-	S	=> sub { $_[2] = $_[0]->second(); goto &_fmt_number_02; },
-	s	=> sub { $_[0]->epoch() },
+	S	=> sub { $_[2] = $_[0]->__fmt_shire_second(); goto &_fmt_number_02; },
+	s	=> sub { $_[0]->__fmt_shire_epoch() },
 	T	=> sub { __format( $_[0], '%H:%M:%S' ) },
 	t	=> sub { "\t" },
 	U	=> sub {
-		    $_[2] = __week_of_year( _fmt_get_md( $_[0] ) );
+		    $_[2] = __week_of_year(
+			$_[0]->__fmt_shire_month(), $_[0]->__fmt_shire_day() );
 		    goto &_fmt_number_02;
 		},
-	u	=> sub { $_[0]->weekday_number() },
+	u	=> sub { $_[0]->__fmt_shire_day_of_week() },
 #	V	Same as U by definition of Shire calendar
 	v	=> sub { __format( $_[0], '%{{%e-%b-%Y||%Ee-%Y}}' ) },
 #	W	Same as U by definition of Shire calendar
 #	X	Same as r, I think
 	x	=> sub { __format( $_[0], '%{{%e %b %Y||%Ee %Y}}' ) }, 
-	Y	=> sub { $_[0]->year_number() },
+	Y	=> sub { $_[0]->__fmt_shire_year() },
 	y	=> sub {
-		    $_[2] = $_[0]->year_number() % 100;
+		    $_[2] = $_[0]->__fmt_shire_year() % 100;
 		    goto &_fmt_number_02;
 		},
-	Z	=> sub { $_[0]->time_zone_short_name() },
-	z	=> sub { _fmt_offset( $_[0]->offset() ) },
+	Z	=> sub { $_[0]->__fmt_shire_zone_name() },
+	z	=> sub { _fmt_offset( $_[0]->__fmt_shire_zone_offset() ) },
 	'%'	=> sub { '%' },
     );
     $spec{G} = $spec{Y};	# By definition of Shire calendar.
@@ -342,7 +338,6 @@ sub _fmt_get_md {
 
 sub _fmt_number {
     my ( undef, $ctx, $val ) = @_;	# Invocant unused
-    $val = defined $val ? "$val" : '0';
     defined $ctx->{pad}
 	or $ctx->{pad} = '0';
     defined $ctx->{wid}
@@ -378,9 +373,9 @@ sub _fmt_on_date {
     my ( $date, $ctx ) = @_;
     my $pfx = "\n" x $ctx->{prefix_new_line_unless_empty};
     $ctx->{prefix_new_line_unless_empty} = 0;
-    my $month = $date->month_number();
-    my $day = $date->day_number() || $date->holiday_number();
-    defined( my $on_date = $date->accented() ?
+    my $month = $date->__fmt_shire_month();
+    my $day = $date->__fmt_shire_day();
+    defined( my $on_date = $date->__fmt_shire_accented() ?
 	__on_date_accented( $month, $day ) :
 	__on_date( $month, $day ) )
 	or return undef;	## no critic (ProhibitExplicitReturnUndef)
@@ -838,24 +833,14 @@ sub _make_date_object {
 	or Carp::croak( FORMAT_DATE_ERROR );
 
     if ( HASH_REF eq $ref ) {
-	$date = { %{ $date } };	# Clone
-	foreach my $key ( qw{ year month day holiday } ) {
-	    exists $date->{$key}
-		or next;
-	    # TODO alert here and then strip extra code once we're
-	    # stable on this nomenclature
-	    $date->{ "${key}_number" } = delete $date->{$key};
-	}
 	my %hash = %{ $date };
-	if ( $hash{month_number} ) {
-	    $hash{holiday_number} = 0;
-	    $hash{day} ||= 1;
-	} else {
-	    defined $hash{holiday_number}
-		or $hash{holiday_number} = ( $hash{day} || 0 );
-	    $hash{month_number} = $hash{day} = 0;
-	}
-	$hash{$_} ||= 0 for qw{ hour minute second nanosecond };
+	$hash{day} ||= 1;
+	$hash{month} ||= $hash{day} < 7 ? 0 : 1;
+	$hash{$_} ||= 0 for qw{
+	    hour minute second nanosecond epoch
+	};
+	defined $hash{zone_name}
+	    or $hash{zone_name} = '';
 	$date = bless \%hash, DATE_CLASS;
     }
 
@@ -881,20 +866,19 @@ sub __valid_date_class {
     }
     my @missing;
     foreach my $method ( qw{
-	year_number
-	month_number
-	day_number
-	holiday_number
-	hour
-	minute
-	second
-	weekday_number
-	nanosecond
-	epoch
-	offset
-	time_zone_short_name
-	accented
-	traditional
+	__fmt_shire_year
+	__fmt_shire_month
+	__fmt_shire_day
+	__fmt_shire_hour
+	__fmt_shire_minute
+	__fmt_shire_second
+	__fmt_shire_day_of_week
+	__fmt_shire_nanosecond
+	__fmt_shire_epoch
+	__fmt_shire_zone_offset
+	__fmt_shire_zone_name
+	__fmt_shire_accented
+	__fmt_shire_traditional
     } ) {
 	$package->can( $method )
 	    or push @missing, $method;
@@ -1043,37 +1027,31 @@ sub _normalize_for_lookup {
 
 {
     my %calc = (
-	weekday_number	=> sub {
-	    return __day_of_week(
-		$_[0]->month_number(),
-		$_[0]->day_number() || $_[0]->holiday_number(),
-	    );
+	day_of_week	=> sub {
+	    return __day_of_week( $_[0]->__fmt_shire_month(), $_[0]->__fmt_shire_day() );
 	},
-	quarter		=> sub {
-	    return __quarter(
-		$_[0]->month_number(),
-		$_[0]->day_number() || $_[0]->holiday_number(),
-	    );
-	},
+##	quarter		=> sub {
+##	    return __quarter( $_[0]->__fmt_shire_month(), $_[0]->__fmt_shire_day() );
+##	},
     );
 
-    foreach my $method ( qw{
-	year_number month_number day_number holiday_number
+    foreach my $field ( qw{
+	year month day
 	hour minute second nanosecond epoch
-	offset time_zone_short_name
+	zone_offset zone_name
 	accented traditional
     }, keys %calc ) {
-	my $fqn = join '::', __PACKAGE__, 'Date', $method;
-	if ( my $code = $calc{$method} ) {
+	my $fqn = join '::', __PACKAGE__, 'Date', "__fmt_shire_$field";
+	if ( my $code = $calc{$field} ) {
 	    no strict qw{ refs };
 	    *$fqn = sub {
-		defined $_[0]->{$method}
-		    or $_[0]->{$method} = $code->( $_[0] );
-		return $_[0]->{$method};
+		defined $_[0]->{$field}
+		    or $_[0]->{$field} = $code->( $_[0] );
+		return $_[0]->{$field};
 	    };
 	} else {
 	    no strict qw{ refs };
-	    *$fqn = sub { $_[0]->{$method} };
+	    *$fqn = sub { $_[0]->{$field} };
 	}
     }
 }
@@ -1183,32 +1161,75 @@ methods). The C<$pattern> is a string similar to the conversion
 specification passed to C<POSIX::strftime()>; see below for a fuller
 description.
 
-The C<$date> methods (or keys) used are:
+The C<$date> methods used are:
 
-  year_number
-  month_number
-  day_number
-  holiday_number
-  hour
-  minute
-  second
-  weekday_number
-  nanosecond
-  epoch
-  offset
-  time_zone_short_name
+=over
 
-The first seven are heavily used. The last four are used only by
-C<'%N'>, C<'%s'>, C<'%z'>, and C<'%Z'> respectively.
+=item __fmt_shire_year
 
-If you pass a hash, the canonical day specification is either a non-zero
-C<month_number> and C<day> and zero C<holiday_number>, or vice versa.
-But if you pass a zero C<month_number> and C<holiday_number>, the method
-will assume that you were specifying a holiday_number and adjust the
-hash accordingly, though this adjustment will not be visible outside
-C<__format()>. Also, your hash need not specify C<weekday_number> since
-it can be computed from C<month_number> and C<day>, or
-C<holiday_number>.
+This method returns the Shire year, as a number.
+
+=item __fmt_shire_month
+
+This method returns the Shire month as a number in the range C<0> to
+C<12>, with C<0> indicating a holiday.
+
+=item __fmt_shire_day
+
+This method returns the day of the month in the range C<1> to C<30>, or
+the holiday number in the range C<1> to C<6>.
+
+=item __fmt_shire_hour
+
+This method returns the hour in the range C<0> to C<23>.
+
+=item __fmt_shire_minute
+
+This method returns the minute in the range C<0> to C<59>.
+
+=item __fmt_shire_second
+
+This method returns the second in the range C<0> to C<61>.
+
+=item __fmt_shire_day_of_week
+
+This method returns the day of the week as a number in the range C<0> to
+C<7>, with C<0> indicating that the day is not part of any week.
+
+=item __fmt_shire_nanosecond
+
+This method returns the nanosecond (of the second) as a number.
+
+=item __fmt_shire_epoch
+
+This method returns the seconds since the epoch, as a number.
+
+=item __fmt_shire_zone_offset
+
+This method returns the seconds the current time zone is offset from
+C<UTC>, as a number, or C<undef> is the offset is undefined.
+
+=item __fmt_shire_zone_name
+
+This method returns the name of the current time zone, or C<''> if the
+zone is undefined.
+
+=item __fmt_shire_accented
+
+This method returns a true value if L<__on_date()|/__on_date> format is
+to be accented.
+
+=item __fmt_shire_traditional
+
+This method returns a true value if traditional weekday names are to be
+used.
+
+=back
+
+If you pass a hash, the keys are the above method names without the
+leading C<'__fmt_shire_'> (i.e. C<'year'>, C<'month'>, and so on). The year
+must be specified; everything else defaults, generally to C<0>, although
+C<day_of_week>, if unspecified, will be computed from the date.
 
 The following conversion specifications (to use C<strftime()>
 terminology) or patterns (to use L<DateTime|DateTime> terminology) are
@@ -1486,7 +1507,7 @@ of a week (i.e. Midyear's day and the Overlithe). If the second or third
 formats are omitted, the preceding format is used. Trailing C<||>
 operators can also be omitted. If you need to specify more than one
 right curly bracket or vertical bar as part of a format, separate them
-with percent signs (i.e. C<'|%|%|'>.
+with percent signs (i.e. C<'|%|%|'>).
 
 =back
 

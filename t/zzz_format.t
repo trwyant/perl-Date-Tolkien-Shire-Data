@@ -13,35 +13,33 @@ use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 plan tests => 192;
 
 my $normal = {
-    year_number		=> 1419,
-    month_number	=> 3,
-    day_number		=> 25,
+    year	=> 1419,
+    month	=> 3,
+    day		=> 25,
 };
 my $holiday	= {
-    year_number		=> 1419,
-#   month_number	=> 0,
-#   day_number		=> 2,
-    holiday_number	=> 2,
+    year	=> 1419,
+    month	=> 0,
+    day		=> 2,
 };
 my $special	= {
-    year_number		=> 1419,
-#   month_number	=> 0,
-#   day_number		=> 3,
-    holiday_number	=> 3,
-    hour		=> 1,
-    minute		=> 2,
-    second		=> 3,
-    epoch		=> 1234,
-    offset		=> 0,
-    time_zone_short_name	=> 'UTC',
+    year	=> 1419,
+    month	=> 0,
+    day		=> 3,
+    hour	=> 1,
+    minute	=> 2,
+    second	=> 3,
+    epoch	=> 1234,
+    zone_offset	=> 0,
+    zone_name	=> 'UTC',
 };
 
-is( __format( $normal,  '%{year_number}' ), '1419',
-    q<%{year_number} on 25 Rethe 1419> );
-is( __format( $holiday, '%{year_number}' ), '1419',
-    q<%{year_number} on 1 Lithe 1419> );
-is( __format( $special, '%{year_number}' ), '1419',
-    q<%{year_number} on Midyear_number's day 1419> );
+is( __format( $normal,  '%{__fmt_shire_year}' ), '1419',
+    q<%{__fmt_shire_year} on 25 Rethe 1419> );
+is( __format( $holiday, '%{__fmt_shire_year}' ), '1419',
+    q<%{__fmt_shire_year} on 1 Lithe 1419> );
+is( __format( $special, '%{__fmt_shire_year}' ), '1419',
+    q<%{__fmt_shire_year} on Midyear_number's day 1419> );
 
 is( __format( $normal,  '%A' ), 'Sunday', q<%A on 25 Rethe 1419> );
 is( __format( $holiday, '%A' ), 'Highday', q<%A on 1 Lithe 1419> );
@@ -208,8 +206,8 @@ is( __format( $normal,  '%S' ), '00', q<%S on 25 Rethe 1419> );
 is( __format( $holiday, '%S' ), '00', q<%S on 1 Lithe 1419> );
 is( __format( $special, '%S' ), '03', q<%S on Midyear's day 1419> );
 
-is( __format( $normal,  '%s' ), '', q<%s on 25 Rethe 1419> );
-is( __format( $holiday, '%s' ), '', q<%s on 1 Lithe 1419> );
+is( __format( $normal,  '%s' ), '0', q<%s on 25 Rethe 1419> );
+is( __format( $holiday, '%s' ), '0', q<%s on 1 Lithe 1419> );
 is( __format( $special, '%s' ), '1234', q<%s on Midyear's day 1419> );
 
 is( __format( $normal,  '%T' ), '00:00:00', q<%T on 25 Rethe 1419> );
