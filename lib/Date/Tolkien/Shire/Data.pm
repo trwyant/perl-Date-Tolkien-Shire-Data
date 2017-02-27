@@ -832,58 +832,60 @@ sub _make_date_object {
     my $ref = ref $date
 	or Carp::croak( FORMAT_DATE_ERROR );
 
-    if ( HASH_REF eq $ref ) {
-	my %hash = %{ $date };
-	$hash{day} ||= 1;
-	$hash{month} ||= $hash{day} < 7 ? 0 : 1;
-	$hash{$_} ||= 0 for qw{
-	    hour minute second nanosecond epoch
-	};
-	defined $hash{zone_name}
-	    or $hash{zone_name} = '';
-	$date = bless \%hash, DATE_CLASS;
-    }
+    HASH_REF eq $ref
+	or return __valid_date_class( $date );
 
-    {
-	my @missing = __valid_date_class( $date );
-	local $" = ', ';
-	@missing
-	    and Carp::croak(
-	    "A @{[ ref $date ]} is not a valid date object, it lacks: @missing" );
-    }
-
-    return $date;
+    my %hash = %{ $date };
+    $hash{day} ||= 1;
+    $hash{month} ||= $hash{day} < 7 ? 0 : 1;
+    $hash{$_} ||= 0 for qw{
+	hour minute second nanosecond epoch
+    };
+    defined $hash{zone_name}
+	or $hash{zone_name} = '';
+    return bless \%hash, DATE_CLASS;
 }
 
-sub __valid_date_class {
-    my ( $obj ) = @_;
-    my $package = ref $obj || $obj;
-    unless ( ref $obj ) {
-	( my $fn = $package ) =~ s{ :: }{/}smxg;
-	$fn .= '.pm';
-	$INC{$fn}
-	    or require $fn;
+{
+    my %checked;
+
+    sub __valid_date_class {
+	my ( $obj ) = @_;
+	my $pkg = ref $obj || $obj;
+
+	local $" = ', ';
+	@{ $checked{$pkg} ||= do {
+	    unless ( ref $obj ) {
+		( my $fn = $pkg ) =~ s{ :: }{/}smxg;
+		$fn .= '.pm';
+		$INC{$fn}
+		    or require $fn;
+	    }
+	    my @missing;
+	    foreach my $method ( qw{
+		__fmt_shire_year
+		__fmt_shire_month
+		__fmt_shire_day
+		__fmt_shire_hour
+		__fmt_shire_minute
+		__fmt_shire_second
+		__fmt_shire_day_of_week
+		__fmt_shire_nanosecond
+		__fmt_shire_epoch
+		__fmt_shire_zone_offset
+		__fmt_shire_zone_name
+		__fmt_shire_accented
+		__fmt_shire_traditional
+	    } ) {
+		$pkg->can( $method )
+		    or push @missing, $method;
+	    }
+	    \@missing;
+	} }
+	    and Carp::croak(
+	    "$pkg lacks methods: @{ $checked{$pkg} }" );
+	return $obj;
     }
-    my @missing;
-    foreach my $method ( qw{
-	__fmt_shire_year
-	__fmt_shire_month
-	__fmt_shire_day
-	__fmt_shire_hour
-	__fmt_shire_minute
-	__fmt_shire_second
-	__fmt_shire_day_of_week
-	__fmt_shire_nanosecond
-	__fmt_shire_epoch
-	__fmt_shire_zone_offset
-	__fmt_shire_zone_name
-	__fmt_shire_accented
-	__fmt_shire_traditional
-    } ) {
-	$package->can( $method )
-	    or push @missing, $method;
-    }
-    return @missing;
 }
 
 # The arguments are multiple array references. The hash is set up so
@@ -1714,22 +1716,26 @@ returned. Otherwise, C<undef> is returned.
 
 =head2 __valid_date_class
 
+ eval {
+     __valid_date_class( $class );
+     print "$class OK\n";
+     1;
+ } or print $@;
+
 This subroutine takes as its argument either an object or a class name.
-If a class name, it is loaded if possible, and if it has not already
-been loaded. Then the class is checked to see if it has all the methods
-required of a date object passed to L<__format()|/__format>.
+If a class name, it is loaded if needed and possible. Then the class is
+checked to see if it has all the methods required of a date object
+passed to L<__format()|/__format>. If any missing methods are found an
+exception is thrown naming the missing methods; otherwise it returns its
+argument.
 
-In list context it returns the names of any missing methods. In scalar
-context it returns the number of missing methods. So a return of an
-empty list (or zero in scalar context) means the class can probably be
-passed as a date to L<__format()|/__format()>. The weasel word
-'probably' is because the check is on method name only; we have no idea
-whether the semantics of the methods found are what we would like them
-to be.
+If you intend to use a class that autoloads requisite methods, that
+class will need to properly override L<can()|UNIVERSAL/can>, or provide
+forward references to autoloaded methods.
 
-This subroutine is exposed for troubleshooting purposes, though it is
-hoped the exception thrown if this check fails will be sufficiently
-explicit. See also F<tools/valid-date-class>.
+This subroutine is used internally to validate the date argument to
+L<__format()|/__format>. It is exposed for troubleshooting purposes.
+See also F<tools/valid-date-class>.
 
 =head2 __weekday_name
 

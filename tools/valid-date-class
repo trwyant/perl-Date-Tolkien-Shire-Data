@@ -33,15 +33,11 @@ if ( $opt{blib} ) {
 my $exit_status = 0;
 
 foreach my $class ( @ARGV ) {
-    my @missing = __valid_date_class( $class );
-
-    local $\ = "\n";
-    if ( @missing ) {
-	print "$class missing ", join ', ', @missing;
-	$exit_status++;
-    } else {
-	print "$class OK";
-    }
+    eval {
+	__valid_date_class( $class );
+	print "$class OK\n";
+	1;
+    } or print $@;
 }
 
 exit( $exit_status > 250 ? 250 : $exit_status );
