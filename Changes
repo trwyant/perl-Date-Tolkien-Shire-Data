@@ -1,3 +1,9 @@
+0.000_015	2017-02-28	T. R. Wyant
+    Fix test failures under Perl 5.8.5.
+
+    Have __valid_date_class just croak if the class or object is in fact
+    invalid.
+
 0.000_014	2017-02-26	T. R. Wyant
     Rethink __format interface again.  What I think now is that, rather
     than a patchwork of method names from two essentially incombatible
