@@ -177,6 +177,15 @@ sub _fmt_cond {
 }
 
 {
+    # NOTE - I _was_ using assignment to $_[2] followed by a goto to
+    # dispatch _fmt_number__2() and _fmt_number_02(). But this produced
+    # test failures under 5.8.5, which I was able to reproduce, though
+    # not under -d:ptkdb, which suggests it was an optimizer problem.
+    # Only _fmt_number__2() resulted in the failures, but I recoded
+    # both, plus the couple dispatches directly to _fmt_number() since
+    # the previous dispatch scheme for all three involved fiddling with
+    # the contents of @_. There is still a goto inside _fmt_number__2(),
+    # but since I no longer modify @_, I have let that stand.
     my %spec = (
 	A	=> sub { $_[0]->__fmt_shire_traditional() ?
 		    __trad_weekday_name( $_[0]->__fmt_shire_day_of_week() ) :
@@ -189,14 +198,14 @@ sub _fmt_cond {
 	B	=> sub { __month_name( $_[0]->__fmt_shire_month() ) },
 	b	=> sub { __month_abbr( $_[0]->__fmt_shire_month() ) },
 	C	=> sub {
-		    $_[2] = int( $_[0]->__fmt_shire_year() / 100 );
-		    goto &_fmt_number_02;
+		    return _fmt_number_02( @_[ 0, 1 ],
+			int( $_[0]->__fmt_shire_year() / 100 ) );
 		},
 	c	=> sub { __format( $_[0], '%{{%a %x||||%x}} %X' ) },
 	D	=> sub { __format( $_[0], '%{{%m/%d||%Ee}}/%y' ) },
 	d	=> sub {
-		    $_[2] = $_[0]->__fmt_shire_day();
-		    goto &_fmt_number_02;
+		    return _fmt_number_02( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_day() );
 		},
 	Ed	=> \&_fmt_on_date,
 	EE	=> sub { __holiday_name( $_[0]->__fmt_shire_month() ? 0 :
@@ -207,50 +216,74 @@ sub _fmt_cond {
 	Ex	=> sub { __format( $_[0],
 		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
 	e	=> sub {
-		    $_[2] = $_[0]->__fmt_shire_day();
-		    goto &_fmt_number__2;
+		    return _fmt_number__2( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_day() );
 		},
 	F	=> sub { __format( $_[0], '%Y-%{{%m-%d||%Ee}}' ) },
 #	G	Same as Y by definition of Shire calendar
-	H	=> sub { $_[2] = $_[0]->__fmt_shire_hour(); goto &_fmt_number_02 },
+	H	=> sub {
+		    return _fmt_number_02( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_hour() );
+		},
 #	h	Same as b by definition of strftime()
 	I	=> sub {
-		    $_[2] = ( $_[0]->__fmt_shire_hour() || 0 ) % 12 || 12;
-		    goto &_fmt_number_02;
+		    return _fmt_number_02( @_[ 0, 1 ],
+			( $_[0]->__fmt_shire_hour() || 0 ) % 12 || 12,
+		    );
 		},
 	j	=> sub {
 		    defined $_[1]{wid}
 			or $_[1]{wid} = 3;
-		    $_[2] = __date_to_day_of_year( $_[0]->__fmt_shire_year(),
-			$_[0]->__fmt_shire_month(), $_[0]->__fmt_shire_day() );
-		    goto &_fmt_number;
+		    return _fmt_number( @_[ 0, 1 ],
+			__date_to_day_of_year(
+			    $_[0]->__fmt_shire_year(),
+			    $_[0]->__fmt_shire_month(),
+			    $_[0]->__fmt_shire_day(),
+			),
+		    );
 		},
-	k	=> sub { $_[2] = $_[0]->__fmt_shire_hour(); goto &_fmt_number__2; },
+	k	=> sub {
+		    return _fmt_number__2( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_hour() );
+		},
 	l	=> sub {
-		    $_[2] = ( $_[0]->__fmt_shire_hour() || 0 ) % 12 || 12;
-		    goto &_fmt_number__2;
+		    return _fmt_number__2( @_[ 0, 1 ],
+			( $_[0]->__fmt_shire_hour() || 0 ) % 12 || 12 );
 		},
-	M	=> sub { $_[2] = $_[0]->__fmt_shire_minute(); goto &_fmt_number_02; },
-	m	=> sub { $_[2] = $_[0]->__fmt_shire_month(); goto &_fmt_number_02; },
+	M	=> sub {
+		    return _fmt_number_02( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_minute() );
+		},
+	m	=> sub {
+		    return _fmt_number_02( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_month() );
+		},
 	N	=> sub {
 		    defined $_[1]{wid}
 			or $_[1]{wid} = 9;
-		    $_[2] = $_[0]->__fmt_shire_nanosecond();
-		    goto &_fmt_number;
+		    return _fmt_number( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_nanosecond(),
+		    );
 		},
 	n	=> sub { "\n" },
 	P	=> sub { lc __am_or_pm( $_[0]->__fmt_shire_hour() ) },
 	p	=> sub { uc __am_or_pm( $_[0]->__fmt_shire_hour() ) },
 	R	=> sub { __format( $_[0], '%H:%M' ) },
 	r	=> sub { __format( $_[0], '%I:%M:%S %p' ) },
-	S	=> sub { $_[2] = $_[0]->__fmt_shire_second(); goto &_fmt_number_02; },
+	S	=> sub {
+		    return _fmt_number_02( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_second() );
+		},
 	s	=> sub { $_[0]->__fmt_shire_epoch() },
 	T	=> sub { __format( $_[0], '%H:%M:%S' ) },
 	t	=> sub { "\t" },
 	U	=> sub {
-		    $_[2] = __week_of_year(
-			$_[0]->__fmt_shire_month(), $_[0]->__fmt_shire_day() );
-		    goto &_fmt_number_02;
+		    return _fmt_number_02( @_[ 0, 1 ],
+			__week_of_year(
+			    $_[0]->__fmt_shire_month(),
+			    $_[0]->__fmt_shire_day(),
+			),
+		    );
 		},
 	u	=> sub { $_[0]->__fmt_shire_day_of_week() },
 #	V	Same as U by definition of Shire calendar
@@ -260,8 +293,8 @@ sub _fmt_cond {
 	x	=> sub { __format( $_[0], '%{{%e %b %Y||%Ee %Y}}' ) }, 
 	Y	=> sub { $_[0]->__fmt_shire_year() },
 	y	=> sub {
-		    $_[2] = $_[0]->__fmt_shire_year() % 100;
-		    goto &_fmt_number_02;
+		    return _fmt_number_02( @_[ 0, 1 ],
+			$_[0]->__fmt_shire_year() % 100 );
 		},
 	Z	=> sub { $_[0]->__fmt_shire_zone_name() },
 	z	=> sub { _fmt_offset( $_[0]->__fmt_shire_zone_offset() ) },
