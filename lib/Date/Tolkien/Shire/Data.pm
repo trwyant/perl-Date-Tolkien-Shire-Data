@@ -1107,9 +1107,6 @@ Date::Tolkien::Shire::Data - Data functionality for Shire calendars.
 
 =head1 DESCRIPTION
 
-UNTIL THE VERSION 0.001 I CONSIDER THIS ALPHA CODE, AND THE INTERFACE
-CAN AND WILL CHANGE WITHOUT NOTICE. CAVEAT CODER.
-
 This Perl module carries common functionality for implementations of the
 Shire calendar as described in Appendix D of J. R. R. Tolkien's novel
 "Lord Of The Rings". What it really contains is anything that was common
