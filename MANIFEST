@@ -1,7 +1,8 @@
 Build.PL
 Changes
-eg/on-date
 eg/display
+eg/on-date
+eg/scal
 inc/My/Module/Build.pm
 inc/My/Module/Meta.pm
 lib/Date/Tolkien/Shire/Data.pm
