@@ -9,13 +9,11 @@ use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
 plan tests => 6;
 
-require_ok( 'Date::Tolkien::Shire::Data' )
-    or BAIL_OUT();
+require_ok( 'Date::Tolkien::Shire::Data' );
 
 my $is_leap = Date::Tolkien::Shire::Data->can( '__is_leap_year' );
 
-ok( $is_leap, 'Have __is_leap_year()' )
-    or BAIL_OUT();
+ok( $is_leap, 'Have __is_leap_year()' );
 
 is( $is_leap->( 1 ), 0, 'Shire year 1 is not a leap year' );
 
