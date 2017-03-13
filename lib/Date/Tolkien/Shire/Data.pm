@@ -36,19 +36,35 @@ our @EXPORT_OK = qw{
     __weekday_name __weekday_abbr
     __week_of_year
     __year_day_to_rata_die
+    DAY_OF_YEAR_MIDYEARS_DAY
+    DAY_OF_YEAR_OVERLITHE
     GREGORIAN_RATA_DIE_TO_SHIRE
+    HOLIDAY_2_YULE
+    HOLIDAY_1_LITHE
+    HOLIDAY_MIDYEARS_DAY
+    HOLIDAY_OVERLITHE
+    HOLIDAY_2_LITHE
+    HOLIDAY_1_YULE
 };
 our %EXPORT_TAGS = (
-    all	=> \@EXPORT_OK,
+    all		=> \@EXPORT_OK,
+    subs	=> [ grep { m/ \A __ /smx } @EXPORT_OK ],
+    consts	=> [ grep { m/ \A [[:upper:]] /smx } @EXPORT_OK ],
 );
 
 use constant ARRAY_REF	=> ref [];
 use constant CODE_REF	=> ref sub {};
 use constant HASH_REF	=> ref {};
 
-use constant MIDYEAR_DAY_OF_YEAR	=> 183;
-use constant OVERLITHE_DAY_NUMBER	=> 4;
-use constant OVERLITHE_DAY_OF_YEAR	=> 184;
+use constant DAY_OF_YEAR_MIDYEARS_DAY	=> 183;
+use constant DAY_OF_YEAR_OVERLITHE	=> 184;
+
+use constant HOLIDAY_2_YULE		=> 1;
+use constant HOLIDAY_1_LITHE		=> 2;
+use constant HOLIDAY_MIDYEARS_DAY	=> 3;
+use constant HOLIDAY_OVERLITHE		=> 4;
+use constant HOLIDAY_2_LITHE		=> 5;
+use constant HOLIDAY_1_YULE		=> 6;
 
 # See the documentation below for where the value came from.
 
@@ -81,7 +97,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 }
 
 {
-    my @holiday_day = ( undef, 1, 182, 183, OVERLITHE_DAY_OF_YEAR, 185, 366 );
+    my @holiday_day = ( undef, 1, 182, 183, DAY_OF_YEAR_OVERLITHE, 185, 366 );
     my @month_zero = ( undef, 1, 31, 61, 91, 121, 151, 185, 215, 245,
 	275, 305, 335 );
 
@@ -95,9 +111,9 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 
 	unless ( __is_leap_year( $year ) ) {
 	    not $month
-		and OVERLITHE_DAY_NUMBER == $day
+		and HOLIDAY_OVERLITHE == $day
 		and Carp::croak( 'Overlithe only occurs in a leap year' );
-	    $yd >= OVERLITHE_DAY_OF_YEAR
+	    $yd >= DAY_OF_YEAR_OVERLITHE
 		and --$yd;
 	}
 	return $yd;
@@ -109,7 +125,7 @@ use constant GREGORIAN_RATA_DIE_TO_SHIRE	=> 1995694;
 	my ( $year, $yd ) = $validate_doy2d->( @_ );
 
 	unless ( __is_leap_year( $year ) ) {
-	    $yd >= OVERLITHE_DAY_OF_YEAR
+	    $yd >= DAY_OF_YEAR_OVERLITHE
 		and $yd++;
 	}
 	$yd > 0
@@ -1140,6 +1156,20 @@ as follows:
 
 =back
 
+This module is subroutine-based. Nothing is exported by default, but
+everything public can be exported by name. In addition the following
+export tags exist:
+
+=over
+
+=item C<:all> - export everything;
+
+=item C<:consts> - export all manifest constants;
+
+=item C<:subs> - export all subroutines.
+
+=back
+
 =head1 SUBROUTINES
 
 This class supports the following public subroutines. Anything
@@ -1150,7 +1180,7 @@ concerned, they will be package-private for the purposes of any code
 that uses this package.
 
 All of the following are exportable to your name space, but none are
-exported by default.
+exported by default. They can all be exported using export tag C<:subs>.
 
 =head2 __am_or_pm
 
@@ -1811,7 +1841,19 @@ Rata Die, as in the days since 1 Yule of Shire year 0.
 =head1 MANIFEST CONSTANTS
 
 The following manifest constants are exportable to your name space. None
-is exported by default.
+is exported by default. They can all be exported using export tag
+C<:consts>.
+
+=head2 DAY_OF_YEAR_MIDYEARS_DAY
+
+This manifest constant represents the day number of C<Midyear's day> in
+the year, i.e. C<183>.
+
+=head2 DAY_OF_YEAR_OVERLITHE
+
+This manifest constant represents the day number of C<Overlithe> in the
+year, i.e. C<184>. Be aware that day C<184> is C<Overlithe> only in a
+leap year; otherwise day C<184> is C<2 Lithe>.
 
 =head2 GREGORIAN_RATA_DIE_TO_SHIRE
 
@@ -1837,6 +1879,36 @@ using
 L<DateTime::Fiction::JRRTolkien::Shire|DateTime::Fiction::JRRTolkien::Shire>
 version 0.21. This is after I adopted that module but before I started
 messing with the computational internals.
+
+=head3 HOLIDAY_2_YULE
+
+This manifest constant represents the holiday number of <2 Yule>, i.e.
+C<1>.
+
+=head3 HOLIDAY_1_LITHE
+
+This manifest constant represents the holiday number of <1 Lithe>, i.e.
+C<2>.
+
+=head3 HOLIDAY_MIDYEARS_DAY
+
+This manifest constant represents the holiday number of <Midyear's day>,
+i.e. C<3>.
+
+=head3 HOLIDAY_OVERLITHE
+
+This manifest constant represents the holiday number of <Overlithe>,
+i.e. C<4>.
+
+=head3 HOLIDAY_2_LITHE
+
+This manifest constant represents the holiday number of <2 Lithe>, i.e.
+C<5>.
+
+=head3 HOLIDAY_1_YULE
+
+This manifest constant represents the holiday number of <1 Yule>, i.e.
+C<6>.
 
 =head1 SEE ALSO
 
