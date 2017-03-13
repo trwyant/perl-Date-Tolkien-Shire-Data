@@ -5,7 +5,7 @@ use 5.006002;
 use strict;
 use warnings;
 
-use Test::More 0.96;
+use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
 eval {
     require Test::Kwalitee;

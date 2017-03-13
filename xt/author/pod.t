@@ -3,8 +3,6 @@ package main;
 use strict;
 use warnings;
 
-use Test::More 0.88;
-
 BEGIN {
     eval {
 	require Test::Pod;

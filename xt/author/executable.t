@@ -4,9 +4,11 @@ use strict;
 use warnings;
 
 use ExtUtils::Manifest qw{maniread};
-use Test::More 0.88;
+use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
 my $manifest = maniread();
+
+my @file;
 
 foreach ( sort keys %{ $manifest } ) {
     m{ \A bin / }smx
@@ -16,10 +18,14 @@ foreach ( sort keys %{ $manifest } ) {
     m{ \A tools / }smx
 	and next;
 
-    ok ! is_executable(), "$_ should not be executable";
+    push @file, $_;
 }
 
-done_testing;
+plan tests => scalar @file;
+
+foreach ( @file ) {
+    ok( ! is_executable(), "$_ should not be executable" );
+}
 
 sub is_executable {
     my @stat = stat $_;

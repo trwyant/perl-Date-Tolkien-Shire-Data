@@ -1,11 +1,11 @@
 package main;
 
-use 5.006;
+use 5.006002;
 
 use strict;
 use warnings;
 
-use Test::More 0.88;	# Because of done_testing();
+use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
 eval {
     require ExtUtils::Manifest;
@@ -30,26 +30,33 @@ my $min_perl_vers = version->parse( $min_perl );
 
 my $manifest = ExtUtils::Manifest::maniread();
 
+my @test;
+
 foreach my $fn ( sort keys %{ $manifest } ) {
     $fn =~ m{ \A xt/ }smx
 	and next;
     is_perl( $fn )
 	or next;
     my $doc = Perl::MinimumVersion->new( $fn );
-    cmp_ok $doc->minimum_version(), 'le', $min_perl,
-	"$fn works under Perl $min_perl";
+    push @test, [ $doc->minimum_version(), 'le', $min_perl,
+	"$fn works under Perl $min_perl" ];
     my $ppi_doc = $doc->Document();
     foreach my $inc (
 	@{ $ppi_doc->find( 'PPI::Statement::Include' ) || [] } ) {
 	my $vers = $inc->version()
 	    or next;
-	cmp_ok( version->parse( $vers ), '==', $min_perl_vers,
-	    "$fn has use $min_perl, rather than some other version" );
+	push @test, [ version->parse( $vers ), '==', $min_perl_vers,
+	    "$fn has use $min_perl, rather than some other version" ];
 	last;
     }
 }
 
-done_testing;
+plan tests => scalar @test;
+
+foreach ( @test ) {
+    my ( $got, $op, $want, $title ) = @{ $_ };
+    cmp_ok( $got, $op, $want, $title );
+}
 
 sub is_perl {
     my ( $fn ) = @_;

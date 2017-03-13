@@ -5,8 +5,6 @@ use warnings;
 
 use File::Spec;
 
-use Test::More 0.88;
-
 BEGIN {
     eval {
 	require PPI;
