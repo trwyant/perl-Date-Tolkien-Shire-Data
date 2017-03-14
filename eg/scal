@@ -118,7 +118,7 @@ sub month {
 	push @rslt, sprintf "%-@{[ MON_WID ]}s", "$space$name";
     }
 
-    push @rslt, join ' ', map { substr __weekday_abbr( $_ ), 0, 2 } 1 .. 7;
+    push @rslt, join ' ', map { __weekday_narrow( $_ ) } 1 .. 7;
 
     my $start = __date_to_day_of_year( $year, $month, 1 );
 
@@ -136,7 +136,7 @@ sub month {
     foreach my $day_of_year ( $start .. $finish ) {
 	my ( $m, $d ) = __day_of_year_to_date( $year, $day_of_year );
 	$m
-	    or $d = substr __holiday_abbr( $d ), 0, 2;
+	    or $d = __holiday_narrow( $d );
 	push @week, highlight( $d, $day_of_year );
 	@week % 7
 	    and next;

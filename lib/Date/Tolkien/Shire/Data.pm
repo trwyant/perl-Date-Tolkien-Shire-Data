@@ -26,14 +26,15 @@ our @EXPORT_OK = qw{
     __day_of_week
     __format
     __is_leap_year
-    __holiday_name __holiday_name_to_number __holiday_abbr
+    __holiday_abbr __holiday_name __holiday_narrow
+    __holiday_name_to_number
     __month_name __month_name_to_number __month_abbr
     __on_date __on_date_accented
     __quarter __quarter_name __quarter_abbr
     __rata_die_to_year_day
-    __trad_weekday_name __trad_weekday_abbr
+    __trad_weekday_abbr __trad_weekday_name __trad_weekday_narrow
     __valid_date_class
-    __weekday_name __weekday_abbr
+    __weekday_abbr __weekday_name __weekday_narrow
     __week_of_year
     __year_day_to_rata_die
     DAY_OF_YEAR_MIDYEARS_DAY
@@ -223,12 +224,18 @@ sub _fmt_cond {
 		    return _fmt_number_02( @_[ 0, 1 ],
 			$_[0]->__fmt_shire_day() );
 		},
+	Ea	=> sub { $_[0]->__fmt_shire_traditional() ?
+		    __trad_weekday_narrow( $_[0]->__fmt_shire_day_of_week() ) :
+		    __weekday_narrow( $_[0]->__fmt_shire_day_of_week() );
+		},
 	Ed	=> \&_fmt_on_date,
 	EE	=> sub { __holiday_name( $_[0]->__fmt_shire_month() ? 0 :
 		$_[0]->__fmt_shire_day() ) },
 	Ee	=> sub { __holiday_abbr( $_[0]->__fmt_shire_month() ? 0 :
 		$_[0]->__fmt_shire_day() ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
+	Eo	=> sub { __holiday_narrow( $_[0]->__fmt_shire_month() ? 0 :
+		$_[0]->__fmt_shire_day() ) },
 	Ex	=> sub { __format( $_[0],
 		    '%{{%A %-e %B %Y||%A %EE %Y||%EE %Y}}' ) },
 	e	=> sub {
@@ -433,33 +440,33 @@ sub _fmt_on_date {
 
 {
     my @name = ( '',
+	'2Yu', '1Li', 'Myd', 'Oli', '2Li', '1Yu',
+    );
+
+    sub __holiday_abbr {
+	return _lookup( $_[0], \@name );
+    }
+}
+
+{
+    my @name = ( '',
 	'2 Yule', '1 Lithe', q<Midyear's day>, 'Overlithe', '2 Lithe',
 	'1 Yule',
     );
 
-    my $validate_name = _make_validator( qw{ UInt|Undef } );
-
     sub __holiday_name {
-	my ( $holiday ) = $validate_name->( @_ );
-	defined $holiday
-	    or return [ @name ];
-	return $name[ $holiday || 0 ];
+	return _lookup( $_[0], \@name );
     }
 
 }
 
 {
     my @name = ( '',
-	'2Yu', '1Li', 'Myd', 'Oli', '2Li', '1Yu',
+	'2Y', '1L', 'My', 'Ol', '2L', '1Y',
     );
 
-    my $validate = _make_validator( qw{ UInt|Undef } );
-
-    sub __holiday_abbr {
-	my ( $holiday ) = $validate->( @_ );
-	defined $holiday
-	    or return [ @name ];
-	return $name[ $holiday || 0 ];
+    sub __holiday_narrow {
+	return _lookup( $_[0], \@name );
     }
 }
 
@@ -801,22 +808,24 @@ sub _fmt_on_date {
     my @name = ( '', 'Sterrendei', 'Sunnendei', 'Monendei',
 	'Trewesdei', 'Hevenesdei', 'Meresdei', 'Highdei' );
 
-    my $validate = _make_validator( qw{ UInt } );
-
     sub __trad_weekday_name {
-	my ( $weekday ) = $validate->( @_ );
-	return $name[ $weekday ];
+	return _lookup( $_[0], \@name );
     }
 }
 
 {
     my @name = ( '', 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
 
-    my $validate = _make_validator( qw{ UInt } );
-
     sub __trad_weekday_abbr {
-	my ( $weekday ) = $validate->( @_ );
-	return $name[ $weekday ];
+	return _lookup( $_[0], \@name );
+    }
+}
+
+{
+    my @name = ( '', 'St', 'Su', 'Mo', 'Tr', 'He', 'Me', 'Hi' );
+
+    sub __trad_weekday_narrow {
+	return _lookup( $_[0], \@name );
     }
 }
 
@@ -840,22 +849,24 @@ sub _fmt_on_date {
     my @name = ( '', 'Sterday', 'Sunday', 'Monday', 'Trewsday',
 	'Hevensday', 'Mersday', 'Highday' );
 
-    my $validate = _make_validator( qw{ UInt } );
-
     sub __weekday_name {
-	my ( $weekday ) = $validate->( @_ );
-	return $name[ $weekday ];
+	return _lookup( $_[0], \@name );
     }
 }
 
 {
     my @name = ( '', 'Ste', 'Sun', 'Mon', 'Tre', 'Hev', 'Mer', 'Hig' );
 
-    my $validate = _make_validator( qw{ UInt } );
-
     sub __weekday_abbr {
-	my ( $weekday ) = $validate->( @_ );
-	return $name[ $weekday ];
+	return _lookup( $_[0], \@name );
+    }
+}
+
+{
+    my @name = ( '', 'St', 'Su', 'Mo', 'Tr', 'He', 'Me', 'Hi' );
+
+    sub __weekday_narrow {
+	return _lookup( $_[0], \@name );
     }
 }
 
@@ -1000,6 +1011,10 @@ sub _make_lookup_hash {
 	# validators in-line, above, and %type_def needs to be populated
 	# before that happens.
 	%type_def = (
+	    # An array reference
+	    Array	=> sub {
+		ARRAY_REF eq ref $_ ? 0 : 'an ARRAY reference'
+	    },
 	    # A hash reference
 	    Hash	=> sub { HASH_REF eq ref $_ ? 0 : 'a HASH reference' },
 	    # An integer, optionally signed
@@ -1104,6 +1119,23 @@ sub _normalize_for_lookup {
 	    no strict qw{ refs };
 	    *$fqn = sub { $_[0]->{$field} };
 	}
+    }
+}
+
+{
+    my $validate;
+
+    BEGIN {
+	$validate = _make_validator( qw{ UInt|Undef Array } );
+    }
+
+    sub _lookup {
+	my ( $inx, $tbl ) = $validate->( @_ );
+	defined $inx
+	    and return $tbl->[ $inx ];
+	__PACKAGE__ eq caller
+	    or Carp::croak( 'Index not defined' );
+	return $tbl;
     }
 }
 
@@ -1350,6 +1382,11 @@ The day of the month as a decimal number, zero-filled (range C<01> to
 C<30>). On holidays it is the holiday number, zero-filled (range C<01>
 to C<06>).
 
+=item %Ea
+
+The narrow (2-character) weekday name, or C<''> for holidays that are
+part of no week.
+
 =item %Ed
 
 The L<__on_date()|/__on_date> text for the given date.
@@ -1370,6 +1407,10 @@ The abbreviated holiday name, or C<''> for non-holidays.
 
 Inserts nothing, but causes the next C<%Ed> (and B<only> the next one)
 to have a C<"\n"> prefixed if there was an actual event on the date.
+
+=item %Eo
+
+The narrow (2-character) holiday name, or C<''> for non-holidays.
 
 =item %Ex
 
@@ -1621,6 +1662,15 @@ Immediately after the flags (if any) you can specify a field width that
 overrides the default. If you explicitly specify field width, flag
 C<'-'> pads with spaces, even in numeric fields.
 
+=head2 __holiday_abbr
+
+ say __holiday_abbr( 3 );
+
+Given a holiday number C<(1-6)>, this subroutine returns that holiday's
+three-letter abbreviation. If the holiday number is C<0> (i.e. the day
+is not a holiday), an empty string is returned. Otherwise, C<undef> is
+returned.
+
 =head2 __holiday_name
 
  say __holiday_name( 3 );
@@ -1640,12 +1690,12 @@ number of the holiday. Unique abbreviations of names or short names
 digits are returned unmodified. Anything unrecognized causes C<0> to be
 returned.
 
-=head2 __holiday_abbr
+=head2 __holiday_narrow
 
- say __holiday_abbr( 3 );
+ say __holiday_narrow( 3 );
 
 Given a holiday number C<(1-6)>, this subroutine returns that holiday's
-three-letter abbreviation. If the holiday number is C<0> (i.e. the day
+two-letter abbreviation. If the holiday number is C<0> (i.e. the day
 is not a holiday), an empty string is returned. Otherwise, C<undef> is
 returned.
 
@@ -1774,6 +1824,15 @@ This subroutine computes the three-letter abbreviation of a traditional
 is C<0> (i.e.  Midyear's day or the Overlithe) the empty string is
 returned. Otherwise, C<undef> is returned.
 
+=head2 __trad_weekday_narrow
+
+ say 'Day 1 is ', __trad_weekday_narrow( 1 );
+
+This subroutine computes the two-letter abbreviation of a traditional
+(i.e. old-style) weekday given its number (1-7). If the weekday number
+is C<0> (i.e.  Midyear's day or the Overlithe) the empty string is
+returned. Otherwise, C<undef> is returned.
+
 =head2 __valid_date_class
 
  eval {
@@ -1810,6 +1869,15 @@ empty string is returned. Otherwise, C<undef> is returned.
  say 'Day 1 is ', __weekday_abbr( 1 );
 
 This subroutine computes the three-letter abbreviation of a weekday
+given its number (1-7). If the weekday number is C<0> (i.e. Midyear's
+day or the Overlithe) the empty string is returned. Otherwise, C<undef>
+is returned.
+
+=head2 __weekday_narrow
+
+ say 'Day 1 is ', __weekday_narrow( 1 );
+
+This subroutine computes the two-letter abbreviation of a weekday
 given its number (1-7). If the weekday number is C<0> (i.e. Midyear's
 day or the Overlithe) the empty string is returned. Otherwise, C<undef>
 is returned.

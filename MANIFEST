@@ -18,6 +18,7 @@ t/date_to_day_of_year.t
 t/day_of_week.t
 t/holiday_name.t
 t/holiday_abbr.t
+t/holiday_narrow.t
 t/month_name.t
 t/month_abbr.t
 t/on_date.t
@@ -25,9 +26,11 @@ t/on_date_accented.t
 t/quarter.t
 t/trad_weekday_name.t
 t/trad_weekday_abbr.t
+t/trad_weekday_narrow.t
 t/week_of_year.t
 t/weekday_name.t
 t/weekday_abbr.t
+t/weekday_narrow.t
 t/year_day_to_rata_die.t
 t/zzz_format.t
 tools/valid-date-class

@@ -10,7 +10,7 @@ use Date::Tolkien::Shire::Data qw{
 };
 use Test::More 0.47;	# The best we can do with Perl 5.6.2.
 
-plan tests => 192;
+plan tests => 201;
 
 my $normal = {
     year	=> 1419,
@@ -73,6 +73,10 @@ is( __format( $normal,  '%d' ), '25', q<%d on 25 Rethe 1419> );
 is( __format( $holiday, '%d' ), '02', q<%d on 1 Lithe 1419> );
 is( __format( $special, '%d' ), '03', q<%d on Midyear's day 1419> );
 
+is( __format( $normal,  '%Ea' ), 'Su', q<%Ea on 25 Rethe 1419> );
+is( __format( $holiday, '%Ea' ), 'Hi', q<%Ea on 1 Lithe 1419> );
+is( __format( $special, '%Ea' ), '', q<%Ea on Midyear's day 1419> );
+
 # Brought forward because it effects %Ed
 is( __format( $normal,  '%En' ), '', q<%En on 25 Rethe 1419> );
 is( __format( $holiday, '%En' ), '', q<%En on 1 Lithe 1419> );
@@ -111,6 +115,10 @@ is( __format( $special, '%EE' ), q<Midyear's day>,
 is( __format( $normal,  '%Ee' ), '', q<%Ee on 25 Rethe 1419> );
 is( __format( $holiday, '%Ee' ), '1Li', q<%Ee on 1 Lithe 1419> );
 is( __format( $special, '%Ee' ), 'Myd', q<%Ee on Midyear's day 1419> );
+
+is( __format( $normal,  '%Eo' ), '', q<%Eo on 25 Rethe 1419> );
+is( __format( $holiday, '%Eo' ), '1L', q<%Eo on 1 Lithe 1419> );
+is( __format( $special, '%Eo' ), 'My', q<%Eo on Midyear's day 1419> );
 
 # %Ex is deferred until all component formats have been tested.
 
@@ -334,6 +342,13 @@ is( __format( $special, '%c' ), 'Myd 1419 01:02:03 AM',
 	q<Traditional %a on 1 Lithe 1419> );
     is( __format( $special, '%a' ), '',
 	q<Traditional %a on Midyear's day 1419> );
+
+    is( __format( $normal,  '%Ea' ), 'Su',
+	q<Traditional %Ea on 25 Rethe 1419> );
+    is( __format( $holiday, '%Ea' ), 'Hi',
+	q<Traditional %Ea on 1 Lithe 1419> );
+    is( __format( $special, '%Ea' ), '',
+	q<Traditional %Ea on Midyear's day 1419> );
 
     # These three tests are to try to demonstrate that the locale gets
     # propagated all through the __format() subsystem.
