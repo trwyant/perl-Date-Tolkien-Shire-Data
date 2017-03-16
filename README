@@ -8,12 +8,11 @@ mostly data and calculations common to the two modules, but there is
 also a piece of new functionality: an output formatter for Shire dates
 analogous to strftime(). All functionality is provided by subroutines.
 
-Because of its nature, you probably do not want to use this module
-directly. At least, not without looking into Date::Tolkien::Shire which
-is (or at least will become, as of this revision of the README) a
-semi-thin object-oriented front end to this module, or
-DateTime::Fiction::JRRTolkien::Shire which is a somewhat-quirky member
-of the DateTime family.
+Because of its nature, you probably do not want to use this module directly.
+At least, not without looking into Date::Tolkien::Shire which is a semi-thin
+object-oriented front end to this module, or
+DateTime::Fiction::JRRTolkien::Shire which is a somewhat-quirky member of the
+DateTime family.
 
 INSTALLATION
 
