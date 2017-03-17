@@ -59,10 +59,9 @@ my $column_format = "%${column_width}s";
 my $month_width = $column_width * 7 + 6;
 
 my ( $current_sy, $today ) = do {
-    my ( $d, $m, $y ) = ( localtime )[ 3 .. 5 ];
-    $m += 1;
+    my ( $y, $yd ) = ( localtime )[ 5, 7 ];
+    $yd += 1;	# Conversion to RD uses 1-based day of year
     $y += 1900;
-    my $yd = __date_to_day_of_year( $y, $m, $d );
     __rata_die_to_year_day(
 	__year_day_to_rata_die( $y, $yd ) + GREGORIAN_RATA_DIE_TO_SHIRE );
 };
