@@ -1,4 +1,6 @@
-0.001_01	2017-03-16	T. R. Wyant
+0.002		2017-03-23	T. R. Wyant
+    Fix current day calculation in eg/scal.
+
     Update README for publication of front ends, to direct the reader to
     Date::Tolkien::Shire or DateTime::Fiction::JRRTolkien::Shire.
 
