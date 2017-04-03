@@ -17,7 +17,7 @@ use Text::Abbrev();
 use Exporter ();
 our @ISA = qw{ Exporter };
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 our @EXPORT_OK = qw{
     __am_or_pm
