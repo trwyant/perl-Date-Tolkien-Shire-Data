@@ -55,7 +55,7 @@ display - Display results of Shire calendar routines
 =head1 SYNOPSIS
 
  display date_to_day_of_year 1419 3 25
- display weekday_name 0 2
+ display weekday_name 2
  display -help
  display -version
 
