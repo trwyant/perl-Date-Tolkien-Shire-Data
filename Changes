@@ -1,3 +1,6 @@
+0.003_01	2018-03-14	T. R. Wyant
+    Put circumflex over second 'u' in 'Udun', in accented output.
+
 0.003		2017-04-02	T. R. Wyant
     Correct __on_date() text for 8 Astron from 'fields of Cormallen' to
     'Field of Cormallen.'
