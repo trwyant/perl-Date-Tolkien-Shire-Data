@@ -735,6 +735,7 @@ sub _fmt_on_date {
 			$day =~ s/ \b Nazgul \b /Nazg${u_circ}l/smxgo;
 			$day =~ s/ \b Theoden \b /Th${e_acute}oden/smxgo;
 			$day =~ s/ \b Theodred \b /Th${e_acute}odred/smxgo;
+			$day =~ s/ \b Udun \b /Ud${u_circ}n/smxgo;
 		    }
 		    push @{ $on_date_accented[-1] }, $day;
 		}
