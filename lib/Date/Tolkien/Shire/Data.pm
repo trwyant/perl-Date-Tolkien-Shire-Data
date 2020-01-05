@@ -557,8 +557,8 @@ sub _fmt_on_date {
 
     $on_date[1][8]   = "The Company of the Ring reaches Hollin, 1419.\n";
     $on_date[1][13]  = "The Company of the Ring reaches the West-gate of Moria at nightfall, 1419.\n";
-    $on_date[1][14]  = "The Company of the Ring spends the night in Moria hall 21, 1419.\n";
-    $on_date[1][15]  = "The Bridge of Khazad-dum, and the fall of Gandalf, 1419.\n";
+    $on_date[1][14]  = "The Company of the Ring spends the night in Moria Hall 21, 1419.\n";
+    $on_date[1][15]  = "The Bridge of Khazad-dum, and fall of Gandalf, 1419.\n";
     $on_date[1][17]  = "The Company of the Ring comes to Caras Galadhon at evening, 1419.\n";
     $on_date[1][23]  = "Gandalf pursues the Balrog to the peak of Zirakzigil, 1419.\n";
     $on_date[1][25]  = "Gandalf casts down the Balrog, and passes away.\n" .
