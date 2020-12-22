@@ -1369,7 +1369,7 @@ and month, and the weekday name is omitted if the holiday is part of no
 week. So (assuming times for all events):
 
  Sun 25 Ret 1419  3:00:00 PM # Ring destroyed
- Myd 1419 12:00:OO PM        # Wedding of Aragorn and Arwen
+ Myd 1419 12:00:00 PM        # Wedding of Aragorn and Arwen
 
 =item %D
 
@@ -1804,7 +1804,7 @@ L<http://howardhinnant.github.io/date_algorithms.html#civil_from_days>.
 
 This subroutine assumes no particular calendar, though it does assume
 the Gregorian year-length rules, which have also been adopted for the
-Shire calendar. If you feed it am honest-to-God Rata Die day (i.e. days
+Shire calendar. If you feed it an honest-to-God Rata Die day (i.e. days
 since December 31 of proleptic Gregorian year 0) you get back the
 Gregorian year and the day of that year (C<1-366>). If you feed it a
 so-called Shire Rata Die (i.e. days since 1 Yule of Shire year 0) you
