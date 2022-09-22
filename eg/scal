@@ -22,6 +22,7 @@ if ( defined( my $home = get_home() ) ) {
     local $! = undef;
     if ( open my $fh, '<', $path ) {
 	my @config;
+	local $_ = undef;	# while (<>) ... does not localize $_.
 	while ( <$fh> ) {
 	    s/ \s+ \z //smx;
 	    m/ \A \s* (?: \z | [#] ) /smx
