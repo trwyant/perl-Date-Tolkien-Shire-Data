@@ -579,7 +579,7 @@ sub _fmt_on_date {
     $on_date[2][27]  = "Aragorn reaches the west-cliff at sunrise, 1419.\n" .
 		       "Eomer sets out from Eastfold against Theoden's orders to pursue the Orcs, 1419.\n";
     $on_date[2][28]  = "Eomer overtakes the Orcs just outside of Fangorn Forest, 1419.\n";
-    $on_date[2][29]  = "Meriodoc and Pippin escape and meet Treebeard, 1419.\n" .
+    $on_date[2][29]  = "Meriadoc and Pippin escape and meet Treebeard, 1419.\n" .
 		       "The Rohirrim attack at sunrise and destroy the Orcs, 1419.\n" .
 		       "Frodo descends from the Emyn Muil and meets Gollum, 1419.\n" .
 		       "Faramir sees the funeral boat of Boromir, 1419.\n";
