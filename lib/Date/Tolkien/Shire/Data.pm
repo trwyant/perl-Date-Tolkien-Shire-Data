@@ -235,6 +235,8 @@ sub _fmt_cond {
 		$_[0]->__fmt_shire_day() ) },
 	Ee	=> sub { __holiday_abbr( $_[0]->__fmt_shire_month() ? 0 :
 		$_[0]->__fmt_shire_day() ) },
+	El	=> sub { __format( $_[0], '%{{%b %d||%Ee}}' ) },
+	EL	=> sub { __format( $_[0], '%{{%B %d||%EE}}' ) },
 	En	=> sub { $_[1]{prefix_new_line_unless_empty}++; '' },
 	Eo	=> sub { __holiday_narrow( $_[0]->__fmt_shire_month() ? 0 :
 		$_[0]->__fmt_shire_day() ) },
@@ -1443,6 +1445,17 @@ The full holiday name, or C<''> for non-holidays.
 =item %Ee
 
 The abbreviated holiday name, or C<''> for non-holidays.
+
+=item %EL
+
+The full day label. This is the full month name and day number, or the
+full holiday name. It is equivalent to C<'%{{%B %d||%EE}}'>.
+
+=item %El
+
+The abbreviated day label. This is the abbreviated month name and day
+number, or the abbreviated holiday name. It is equivalent to
+C<'%{{%b %d||%Ee}}'>.
 
 =item %En
 
