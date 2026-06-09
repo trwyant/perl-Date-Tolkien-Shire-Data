@@ -1691,7 +1691,7 @@ case you were wondering.
 
 =item 0 (zero)
 
-This flag specifies padding with zeroes. That is to say, on the first of
+This flag specifies padding with zeros. That is to say, on the first of
 the month, C<'%0e'> produce C<'01'>, not C<' 1'>. So does C<'%0d'>, in
 case you were wondering.
 
