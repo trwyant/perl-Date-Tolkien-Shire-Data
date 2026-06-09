@@ -2078,8 +2078,7 @@ L<DateTime::Fiction::JRRTolkien::Shire|DateTime::Fiction::JRRTolkien::Shire>
 =head1 SUPPORT
 
 Support is by the author. Please file bug reports at
-L<https://rt.cpan.org/Public/Dist/Display.html?Name=Date-Tolkien-Shire-Data>,
-L<https://github.com/trwyant/perl-Date-Tolkien-Shire-Data/issues>, or in
+L<https://github.com/trwyant/perl-Date-Tolkien-Shire-Data/issues> or in
 electronic mail to the author.
 
 =head1 AUTHOR
