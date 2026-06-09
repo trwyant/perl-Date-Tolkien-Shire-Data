@@ -7,8 +7,8 @@ eg/scal
 inc/My/Module/Build.pm
 inc/My/Module/Meta.pm
 lib/Date/Tolkien/Shire/Data.pm
-LICENSES/Artistic
-LICENSES/Copying
+LICENSE-Artistic
+LICENSE-GPL
 Makefile.PL
 MANIFEST
 META.json
